@@ -15,6 +15,16 @@ td.log-meta-data {
   width: 200px;
 }
 
+table.log-data-view {
+  width: 100%;
+}
+
+td.log-field-column {
+  vertical-align: top;
+  text-align: right;
+  font-weight: bolder;
+}
+
 button.thin {
   padding-top: 6px;
   padding-bottom: 6px;
@@ -23,4 +33,20 @@ button.thin {
 button.thin2 {
   padding-top: 10px;
   padding-bottom: 10px;
+}
+
+
+div.metadata {
+  h3 {
+    margin: 0px;
+    padding: 10px;
+    line-height: 1.5em;
+    font-size: 13pt;
+    color: #eee;
+    background-color: rgb(44, 62, 80);
+  }
+
+  div {
+    font-size: 10pt;
+  }
 }

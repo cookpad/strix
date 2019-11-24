@@ -1,5 +1,5 @@
 <template>
-  <div style="padding-top:60px;padding-bottom: 30px;">
+  <div style="padding-top:30px;padding-bottom: 30px;">
     <div class="row">
       <div class="column large-12 query-input">
         <input
@@ -64,47 +64,67 @@
       </div>
     </div>
 
-    <!-- Pagenation (header) -->
-    <div class="row" v-if="pages.length > 0">
-      <ul class="pagination">
-        <li v-for="p in pages" v-bind:class="{current: p.current}">
-          <a href="#" v-on:click="changeSearchResultOffset(p.offset)">{{ p.index + 1 }}</a>
-        </li>
-      </ul>
-    </div>
+    <!-- Log view --->
+    <div class="row" v-if="logs.length > 0">
+      <div class="large-9 push-3 columns">
+        <!-- Pagenation (header) -->
+        <div class="row" v-if="pages.length > 0">
+          <ul class="pagination">
+            <li v-for="p in pages" v-bind:class="{current: p.current}">
+              <a href="#" v-on:click="changeSearchResultOffset(p.offset)">{{ p.index + 1 }}</a>
+            </li>
+          </ul>
+        </div>
 
-    <!-- Log view -->
-    <div class="row">
-      <div class="large-12 columns">
-        <table v-if="logs.length > 0">
-          <thead>
-            <tr>
-              <td>Meta</td>
-              <td>Log</td>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="log in logs">
-              <td class="log-meta-data">
-                <strong>{{ log.datetime }}</strong>
-                <span class="label" v-bind:style="log.labelStyle">{{ log.tag }}</span>
-              </td>
-              <td>
-                <pre>{{ log.data  }}</pre>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <!-- Log view -->
+        <div class="row">
+          <table>
+            <thead>
+              <tr>
+                <td>Meta</td>
+                <td>Log</td>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="log in logs">
+                <td class="log-meta-data">
+                  <strong>{{ log.datetime }}</strong>
+                  <span class="label" v-bind:style="log.labelStyle">{{ log.tag }}</span>
+                </td>
+                <td>
+                  <table class="log-data-view">
+                    <tbody>
+                      <tr v-for="d in log.data">
+                        <td class="log-field-column">{{ d.k }}</td>
+                        <td>
+                          <pre>{{ d.v }}</pre>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagenation (footer) -->
+        <div class="row" v-if="pages.length > 0">
+          <ul class="pagination">
+            <li v-for="p in pages" v-bind:class="{current: p.current}">
+              <a href="#" v-on:click="changeSearchResultOffset(p.offset)">{{ p.index + 1 }}</a>
+            </li>
+          </ul>
+        </div>
       </div>
-    </div>
 
-    <!-- Pagenation (footer) -->
-    <div class="row" v-if="pages.length > 0">
-      <ul class="pagination">
-        <li v-for="p in pages" v-bind:class="{current: p.current}">
-          <a href="#" v-on:click="changeSearchResultOffset(p.offset)">{{ p.index + 1 }}</a>
-        </li>
-      </ul>
+      <div class="large-3 pull-9 columns">
+        <div class="docs accordion metadata">
+          <h3 class="metadata">Results</h3>
+          <div class="content active">Elapsed time: {{ metadata.elapsed_seconds }} seconds</div>
+          <div class="content active">Total: {{ metadata.total }} logs</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -157,31 +177,45 @@ function toTextColor(color) {
 function renderResult(data) {
   appData.searchStatus = null;
   appData.metadata = data.metadata;
-  appData.logs = data.logs.map(x => {
-    const bgColor =
-      "#" +
-      SHA1(x.tag)
-        .toString()
-        .substring(0, 6);
-    return {
-      tag: x.tag,
-      datetime: strftime("%F %T%z", new Date(x.timestamp * 1000)),
-      data: JSON.stringify(x.log, null, 4),
-      labelStyle: {
-        "background-color": bgColor,
-        color: toTextColor(bgColor)
-      }
-    };
-  });
 
-  appData.pages = [];
-  const step = data.metadata.limit;
-  for (var i = 0; i * step < data.metadata.total; i++) {
-    appData.pages.push({
-      index: i,
-      offset: i * step,
-      current: data.metadata.offset === i * step
+  if (appData.logs !== null) {
+    appData.logs = data.logs.map(x => {
+      const bgColor =
+        "#" +
+        SHA1(x.tag)
+          .toString()
+          .substring(0, 6);
+
+      return {
+        tag: x.tag,
+        datetime: strftime("%F %T%z", new Date(x.timestamp * 1000)),
+        data: Object.keys(x.log).map(k => {
+          return {
+            k: k,
+            v:
+              typeof x.log[k] === "object"
+                ? JSON.stringify(x.log[k], null, 4)
+                : x.log[k]
+          };
+        }),
+        labelStyle: {
+          "background-color": bgColor,
+          color: toTextColor(bgColor)
+        }
+      };
     });
+
+    appData.pages = [];
+    const step = data.metadata.limit;
+    for (var i = 0; i * step < data.metadata.total; i++) {
+      appData.pages.push({
+        index: i,
+        offset: i * step,
+        current: data.metadata.offset === i * step
+      });
+    }
+  } else {
+    appData.errorMessage = "No log found";
   }
 }
 
@@ -218,13 +252,16 @@ function changeSearchResultOffset(offset) {
     .get(`/api/v1/search/` + appData.queryID + `/result?` + qs)
     .then(function(response) {
       console.log(response);
-      if (response.data.metadata.status === "SUCCEEDED") {
-        renderResult(response.data);
-      } else {
-        showError(
-          "Invalid request (Status is not SUCCEEDED): " +
-            response.data.metadata.status
-        );
+      switch (response.data.metadata.status) {
+        case "SUCCEEDED":
+          renderResult(response.data);
+          break;
+        default:
+          showError(
+            "Fail request (Status is not SUCCEEDED): " +
+              response.data.metadata.status
+          );
+          break;
       }
     })
     .catch(showError);
@@ -237,18 +274,25 @@ function getSearchResult(queryID, startDate) {
     .get(`/api/v1/search/` + queryID + `/result`)
     .then(function(response) {
       console.log(response);
-      if (response.data.metadata.status === "SUCCEEDED") {
-        renderResult(response.data);
-      } else {
-        const now = new Date();
-        setTimeout(function() {
-          appData.searchStatus =
-            "Elapsed time: " +
-            (now.getTime() -
-              appData.queryStart.getTime() / 1000 +
-              " seconds...");
-          getSearchResult(queryID, startDate);
-        }, 1000);
+
+      switch (response.data.metadata.status) {
+        case "SUCCEEDED":
+          renderResult(response.data);
+          break;
+
+        case "RUNNING":
+          const now = new Date();
+          setTimeout(function() {
+            appData.searchStatus =
+              "Elapsed time: " +
+              ((now.getTime() - appData.queryStart.getTime()) / 1000 +
+                " seconds...");
+            getSearchResult(queryID, startDate);
+          }, 1000);
+          break;
+
+        default:
+          showError("Fail request: " + response.data.metadata.status);
       }
     })
     .catch(showError);
