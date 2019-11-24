@@ -31,6 +31,9 @@ td.log-field-column {
   vertical-align: top;
   text-align: right;
   font-weight: bolder;
+  width: 150px;
+  display: inline-block;
+  word-wrap: break-word;
 }
 
 pre.log-value-column {
