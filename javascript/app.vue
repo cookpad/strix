@@ -57,7 +57,7 @@
 
     <div class="row" v-if="errorMessage !== null">
       <div class="large-8 columns">
-        <div class="alert-box alert">{{ errorMessage}}</div>
+        <div class="alert-box alert">{{ errorMessage }}</div>
       </div>
       <div class="large-4 columns">
         <button class="alert-dark thin" v-on:click="clearError()">Dismiss</button>
@@ -97,7 +97,7 @@
                       <tr v-for="d in log.data">
                         <td class="log-field-column">{{ d.k }}</td>
                         <td>
-                          <pre>{{ d.v }}</pre>
+                          <pre class="log-value-column" v-html="d.v"></pre>
                         </td>
                       </tr>
                     </tbody>
@@ -133,6 +133,7 @@ import axios from "axios";
 import strftime from "strftime";
 import querystring from "querystring";
 import SHA1 from "crypto-js/sha1";
+import sanitizeHTML from "sanitize-html";
 
 var httpClient = axios.create({
   headers: { "x-api-key": localStorage.getItem("apiKey") }
@@ -140,6 +141,7 @@ var httpClient = axios.create({
 
 const appData = {
   query: "",
+  queryTerms: [],
   searchStatus: null,
   queryID: null,
   queryStart: null,
@@ -174,6 +176,32 @@ function toTextColor(color) {
   return Cw < Cb ? "#000" : "#fff";
 }
 
+function renderLogDataValue(raw) {
+  let values = [sanitizeHTML(raw)];
+  const terms = appData.queryTerms.map(x => x.term);
+
+  terms.forEach(t => {
+    values = values
+      .map(x => x.split(t))
+      .reduce((p, c) => p.concat(c), [])
+      .map(v => [v, t])
+      .reduce((p, c) => p.concat(c), [])
+      .slice(0, -1);
+  });
+
+  const msg = values
+    .map(v => {
+      if (terms.indexOf(v) >= 0) {
+        return '<span class="log-highlight">' + v + "</span>";
+      } else {
+        return v;
+      }
+    })
+    .join("");
+
+  return msg;
+}
+
 function renderResult(data) {
   appData.searchStatus = null;
   appData.metadata = data.metadata;
@@ -190,12 +218,14 @@ function renderResult(data) {
         tag: x.tag,
         datetime: strftime("%F %T%z", new Date(x.timestamp * 1000)),
         data: Object.keys(x.log).map(k => {
+          const v =
+            typeof x.log[k] === "object"
+              ? JSON.stringify(x.log[k], null, 4)
+              : x.log[k];
+
           return {
             k: k,
-            v:
-              typeof x.log[k] === "object"
-                ? JSON.stringify(x.log[k], null, 4)
-                : x.log[k]
+            v: renderLogDataValue(v)
           };
         }),
         labelStyle: {
@@ -325,12 +355,12 @@ function submitQuery(ev) {
   const start_dt = strftime("%FT%T", start);
   appData.queryStart = now;
 
-  const terms = appData.query.split(/\s+/).map(x => {
+  appData.queryTerms = appData.query.split(/\s+/).map(x => {
     return { term: x };
   });
 
   const body = {
-    query: terms,
+    query: appData.queryTerms,
     start_dt: start_dt,
     end_dt: end_dt
   };

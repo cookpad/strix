@@ -19,10 +19,22 @@ table.log-data-view {
   width: 100%;
 }
 
+span.log-highlight {
+  // color: #fff;
+  font-weight: bold;
+  background-color: #FBE481;
+  padding-left: 3px;
+  padding-right: 3px;
+}
+
 td.log-field-column {
   vertical-align: top;
   text-align: right;
   font-weight: bolder;
+}
+
+pre.log-value-column {
+  font-family: 'Tahoma';
 }
 
 button.thin {
