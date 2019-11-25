@@ -97,7 +97,7 @@
                       <tr v-for="d in log.data">
                         <td class="log-field-column">{{ d.k }}</td>
                         <td>
-                          <pre class="log-value-column" v-html="d.v"></pre>
+                          <pre class="log-value" v-html="d.v"></pre>
                         </td>
                       </tr>
                     </tbody>
