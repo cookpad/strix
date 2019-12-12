@@ -74,6 +74,9 @@
         </div>
       </div>
 
+      <!-- TODO: add "columns" class.
+      Originally the <div> also should have "column", but layout will be broken if value is too long.
+      I'm not good CSS writer for now-->
       <div class="log-view">
         <!-- Pagenation (header) -->
         <div v-if="pages.length > 0">
@@ -107,7 +110,7 @@
                       <tr v-for="d in log.data">
                         <td class="log-field">{{ d.k }}</td>
                         <td class="log-value">
-                          <pre class="log-value" v-html="d.v"></pre>
+                          <div class="log-value" v-html="d.v"></div>
                         </td>
                       </tr>
                     </tbody>
@@ -135,7 +138,7 @@ import axios from "axios";
 import strftime from "strftime";
 import querystring from "querystring";
 import SHA1 from "crypto-js/sha1";
-import sanitizeHTML from "sanitize-html";
+import escapeHTML from "escape-html";
 
 var httpClient = axios.create({
   headers: { "x-api-key": localStorage.getItem("apiKey") }
@@ -156,6 +159,7 @@ const appData = {
   errorMessage: null
 };
 
+// Ref: https://katashin.info/2018/12/18/247
 function toTextColor(color) {
   var r = parseInt(color.substr(1, 2), 16);
   var g = parseInt(color.substr(3, 2), 16);
@@ -179,7 +183,7 @@ function toTextColor(color) {
 }
 
 function renderLogDataValue(raw) {
-  let values = [sanitizeHTML(raw)];
+  let values = [escapeHTML(raw)];
   const terms = appData.queryTerms.map(x => x.term);
 
   terms.forEach(t => {

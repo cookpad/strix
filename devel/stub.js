@@ -137,12 +137,19 @@ const sampleLogs = [
     },
     {
         timestamp: 1573102644,
-        tag: 'sample.testdata',
+        tag: 'sample.testdata1',
         log: {
             "longvalue1": "Weobservetodaynotavictoryofpartybutacelebrationoffreedomsymbolizinganendaswellasabeginningsignifyingrenewalaswellaschange.ForIhaveswornbeforeyouandAlmightyGodthesamesolemnoathourforbearsprescribednearlyacenturyandthreequartersago.",
             "longvalue2": "Wedarenotforgettodaythatwearetheheirsofthatfirstrevolution.Letthewordgoforthfromthistimeandplace,tofriendandfoealike,thatthetorchhasbeenpassedtoanewgenerationofAmericansborninthiscentury,temperedbywar,disciplinedbyahardandbitterpeace,proudofourancientheritageandunwillingtowitnessorpermittheslowundoingofthosehumanrightstowhichthisnationhasalwaysbeencommitted,andtowhichwearecommittedtodayathomeandaroundtheworld.",
             "longvalue3": "Leteverynationknow,whetheritwishesuswellorill,thatweshallpayanyprice,bearanyburden,meetanyhardship,supportanyfriend,opposeanyfoetoassurethesurvivalandthesuccessofliberty.            ",
             "looooooooooooooooooooooooooooooooooonnnnnnnnnnnnnnnnnnnnnnnngggggggggggggggggggggggggggggggg value": "not long",
+        },
+    },
+    {
+        timestamp: 1573102644,
+        tag: 'sample.testdata2',
+        log: {
+            "message": "XYGAOISF: warning: header Subject: I Love You from unknown[10.1.2.3]; from=<noreply@example.com> to=<mizutani@example.com> proto=ESMTP helo=<mx.example.com>",
         },
     },
 ];
