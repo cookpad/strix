@@ -1,7 +1,7 @@
 <template>
-  <div style="padding-top:30px;padding-bottom: 30px;">
+  <div style="strix-main">
     <div class="row">
-      <div class="column large-12 query-input">
+      <div class="column 2 query-input">
         <input
           type="text"
           autofocus
@@ -10,8 +10,8 @@
           v-model="query"
           @keyup.enter="submitQuery"
         />
-        <div class="large-4 columns">
-          <select v-model="timeSpan">
+        <div class="columns">
+          <select v-model="timeSpan" class="timespan">
             <option value="3600" selected>Last 1 hour</option>
             <option value="7200">Last 2 hours</option>
             <option value="14400">Last 4 hours</option>
@@ -24,10 +24,10 @@
             <option value="2419200">Last 4 week</option>
           </select>
         </div>
-        <div class="large-4 columns">
+        <div class="columns">
           <button class="send_query thin2" v-on:click="submitQuery">Query</button>
         </div>
-        <div class="large-4 columns">
+        <div class="columns">
           <button
             class="secondary thin2"
             v-on:click="showApiKey"
@@ -38,37 +38,45 @@
     </div>
 
     <div class="row" v-if="showApiKeyForm">
-      <div class="columns large-2" style="text-align: right;">
+      <div class="columns" style="text-align: right;">
         <h4>API Key</h4>
       </div>
-      <div class="columns large-8">
+      <div class="columns">
         <input type="text" v-model="apiKey" />
       </div>
-      <div class="large-2 columns">
+      <div class="columns">
         <button class="highlight thin" v-on:click="saveApiKey">Save</button>
       </div>
     </div>
 
     <div class="row" v-if="searchStatus !== null">
-      <div class="large-12 columns query-status">
+      <div class="columns query-status">
         <div class="alert-box radius">{{ searchStatus }}</div>
       </div>
     </div>
 
     <div class="row" v-if="errorMessage !== null">
-      <div class="large-8 columns">
-        <div class="alert-box alert">{{ errorMessage }}</div>
+      <div class="columns">
+        <div class="alert-box alert">[Error] {{ errorMessage }}</div>
       </div>
-      <div class="large-4 columns">
-        <button class="alert-dark thin" v-on:click="clearError()">Dismiss</button>
+      <div class="columns">
+        <button class="alert-dark" v-on:click="clearError()">Dismiss</button>
       </div>
     </div>
 
     <!-- Log view --->
     <div class="row" v-if="logs.length > 0">
-      <div class="large-9 push-3 columns">
+      <div class="columns metadata-view">
+        <div class="metadata">
+          <h3 class="metadata">Results</h3>
+          <div class="content">Elapsed time: {{ metadata.elapsed_seconds }} seconds</div>
+          <div class="content">Total: {{ metadata.total }} logs</div>
+        </div>
+      </div>
+
+      <div class="log-view">
         <!-- Pagenation (header) -->
-        <div class="row" v-if="pages.length > 0">
+        <div v-if="pages.length > 0">
           <ul class="pagination">
             <li v-for="p in pages" v-bind:class="{current: p.current}">
               <a href="#" v-on:click="changeSearchResultOffset(p.offset)">{{ p.index + 1 }}</a>
@@ -77,8 +85,8 @@
         </div>
 
         <!-- Log view -->
-        <div class="row">
-          <table>
+        <div>
+          <table class="log-view">
             <thead>
               <tr>
                 <td>Meta</td>
@@ -88,15 +96,17 @@
             <tbody>
               <tr v-for="log in logs">
                 <td class="log-meta-data">
-                  <strong>{{ log.datetime }}</strong>
-                  <span class="label" v-bind:style="log.labelStyle">{{ log.tag }}</span>
+                  <div class="content">
+                    <strong>{{ log.datetime }}</strong>
+                    <span class="label" v-bind:style="log.labelStyle">{{ log.tag }}</span>
+                  </div>
                 </td>
                 <td>
                   <table class="log-data-view">
                     <tbody>
                       <tr v-for="d in log.data">
-                        <td class="log-field-column">{{ d.k }}</td>
-                        <td>
+                        <td class="log-field">{{ d.k }}</td>
+                        <td class="log-value">
                           <pre class="log-value" v-html="d.v"></pre>
                         </td>
                       </tr>
@@ -109,20 +119,12 @@
         </div>
 
         <!-- Pagenation (footer) -->
-        <div class="row" v-if="pages.length > 0">
+        <div v-if="pages.length > 0">
           <ul class="pagination">
             <li v-for="p in pages" v-bind:class="{current: p.current}">
               <a href="#" v-on:click="changeSearchResultOffset(p.offset)">{{ p.index + 1 }}</a>
             </li>
           </ul>
-        </div>
-      </div>
-
-      <div class="large-3 pull-9 columns">
-        <div class="docs accordion metadata">
-          <h3 class="metadata">Results</h3>
-          <div class="content active">Elapsed time: {{ metadata.elapsed_seconds }} seconds</div>
-          <div class="content active">Total: {{ metadata.total }} logs</div>
         </div>
       </div>
     </div>
@@ -333,6 +335,11 @@ function submitQuery(ev) {
 
   if (appData.apiKey === "") {
     showError("API key required");
+    return;
+  }
+
+  if (appData.query === "") {
+    showError("No query");
     return;
   }
 

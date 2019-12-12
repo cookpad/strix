@@ -135,6 +135,16 @@ const sampleLogs = [
             }
         },
     },
+    {
+        timestamp: 1573102644,
+        tag: 'sample.testdata',
+        log: {
+            "longvalue1": "Weobservetodaynotavictoryofpartybutacelebrationoffreedomsymbolizinganendaswellasabeginningsignifyingrenewalaswellaschange.ForIhaveswornbeforeyouandAlmightyGodthesamesolemnoathourforbearsprescribednearlyacenturyandthreequartersago.",
+            "longvalue2": "Wedarenotforgettodaythatwearetheheirsofthatfirstrevolution.Letthewordgoforthfromthistimeandplace,tofriendandfoealike,thatthetorchhasbeenpassedtoanewgenerationofAmericansborninthiscentury,temperedbywar,disciplinedbyahardandbitterpeace,proudofourancientheritageandunwillingtowitnessorpermittheslowundoingofthosehumanrightstowhichthisnationhasalwaysbeencommitted,andtowhichwearecommittedtodayathomeandaroundtheworld.",
+            "longvalue3": "Leteverynationknow,whetheritwishesuswellorill,thatweshallpayanyprice,bearanyburden,meetanyhardship,supportanyfriend,opposeanyfoetoassurethesurvivalandthesuccessofliberty.            ",
+            "looooooooooooooooooooooooooooooooooonnnnnnnnnnnnnnnnnnnnnnnngggggggggggggggggggggggggggggggg value": "not long",
+        },
+    },
 ];
 
 const server = http.createServer((req, res) => {
