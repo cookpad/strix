@@ -1,39 +1,52 @@
 <template>
   <div style="strix-main">
     <div class="row">
-      <div class="column 2 query-input">
-        <input
-          type="text"
-          autofocus
-          autocomplete="off"
-          placeholder="show your query"
-          v-model="query"
-          @keyup.enter="submitQuery"
-        />
-        <div class="columns">
-          <select v-model="timeSpan" class="timespan">
-            <option value="3600" selected>Last 1 hour</option>
-            <option value="7200">Last 2 hours</option>
-            <option value="14400">Last 4 hours</option>
-            <option value="28800">Last 8 hours</option>
-            <option value="86400">Last 1 day</option>
-            <option value="172800">Last 2 day</option>
-            <option value="345600">Last 4 day</option>
-            <option value="604800">Last 1 week</option>
-            <option value="1209600">Last 2 week</option>
-            <option value="2419200">Last 4 week</option>
-          </select>
-        </div>
-        <div class="columns">
-          <button class="send_query thin2" v-on:click="submitQuery">Query</button>
-        </div>
-        <div class="columns">
-          <button
-            class="secondary thin2"
-            v-on:click="showApiKey"
-            v-if="!showApiKeyForm"
-          >Change API Key</button>
-        </div>
+      <input
+        type="text"
+        autofocus
+        autocomplete="off"
+        placeholder="show your query"
+        v-model="query"
+        @keyup.enter="submitQuery"
+      />
+    </div>
+    <div class="row">
+      <div class="columns">
+        <select v-model="spanMode">
+          <option value="relative" selected>Last</option>
+          <option value="absolute">Between</option>
+        </select>
+      </div>
+
+      <div class="columns" v-if="spanMode == 'relative'">
+        <select v-model="timeSpan" class="timespan">
+          <option value="3600" selected>1 hour</option>
+          <option value="7200">2 hours</option>
+          <option value="14400">4 hours</option>
+          <option value="28800">8 hours</option>
+          <option value="86400">1 day</option>
+          <option value="172800">2 day</option>
+          <option value="345600">4 day</option>
+          <option value="604800">1 week</option>
+          <option value="1209600">2 week</option>
+          <option value="2419200">4 week</option>
+        </select>
+      </div>
+
+      <div class="columns" v-if="spanMode === 'absolute'">
+        <input type="datetime-local" v-model="timeBegin" />
+        To
+        <input type="datetime-local" v-model="timeEnd" />
+      </div>
+      <div class="columns">
+        <button class="send_query thin2" v-on:click="submitQuery">Query</button>
+      </div>
+      <div class="columns">
+        <button
+          class="secondary thin2"
+          v-on:click="showApiKey"
+          v-if="!showApiKeyForm"
+        >Change API Key</button>
       </div>
     </div>
 
@@ -144,19 +157,49 @@ var httpClient = axios.create({
   headers: { "x-api-key": localStorage.getItem("apiKey") }
 });
 
+const nowDatetime = new Date();
+const utcDatetime = new Date(
+  nowDatetime.getUTCFullYear(),
+  nowDatetime.getUTCMonth(),
+  nowDatetime.getUTCDate(),
+  nowDatetime.getUTCHours(),
+  nowDatetime.getUTCMinutes(),
+  nowDatetime.getUTCSeconds()
+);
+
 const appData = {
   query: "",
   queryTerms: [],
   searchStatus: null,
   queryID: null,
-  queryStart: null,
   apiKey: localStorage.getItem("apiKey"),
   showApiKeyForm: localStorage.getItem("apiKey") === null,
   logs: [],
   pages: [],
   metadata: {},
   timeSpan: 3600,
-  errorMessage: null
+  timeBegin: strftime("%Y-%m-%dT%H:%M", utcDatetime),
+  timeEnd: strftime("%Y-%m-%dT%H:%M", utcDatetime),
+  errorMessage: null,
+  spanMode: "relative"
+};
+
+setInterval(() => {
+  console.log(appData.timeBegin);
+}, 1000);
+
+export default {
+  data() {
+    return appData;
+  },
+  methods: {
+    saveApiKey: saveApiKey,
+    editApiKey: editApiKey,
+    showApiKey: showApiKey,
+    clearError: clearError,
+    submitQuery: submitQuery,
+    changeSearchResultOffset: changeSearchResultOffset
+  }
 };
 
 // Ref: https://katashin.info/2018/12/18/247
@@ -212,7 +255,7 @@ function renderResult(data) {
   appData.searchStatus = null;
   appData.metadata = data.metadata;
 
-  if (appData.logs !== null) {
+  if (data.logs !== null && data.logs.length > 0) {
     appData.logs = data.logs.map(x => {
       const bgColor =
         "#" +
@@ -285,7 +328,7 @@ function changeSearchResultOffset(offset) {
     offset: offset
   });
   httpClient
-    .get(`/api/v1/search/` + appData.queryID + `/result?` + qs)
+    .get(`/api/v1/search/` + appData.queryID + `/logs?` + qs)
     .then(function(response) {
       console.log(response);
       switch (response.data.metadata.status) {
@@ -303,11 +346,11 @@ function changeSearchResultOffset(offset) {
     .catch(showError);
 }
 
-function getSearchResult(queryID, startDate) {
+function getSearchResult(queryID) {
   const now = new Date();
 
   httpClient
-    .get(`/api/v1/search/` + queryID + `/result`)
+    .get(`/api/v1/search/` + queryID + `/logs`)
     .then(function(response) {
       console.log(response);
 
@@ -318,12 +361,13 @@ function getSearchResult(queryID, startDate) {
 
         case "RUNNING":
           const now = new Date();
+          appData.searchStatus =
+            "Elapsed time: " +
+            Math.floor(response.data.metadata.elapsed_seconds * 100) / 100 +
+            " seconds";
+
           setTimeout(function() {
-            appData.searchStatus =
-              "Elapsed time: " +
-              ((now.getTime() - appData.queryStart.getTime()) / 1000 +
-                " seconds...");
-            getSearchResult(queryID, startDate);
+            getSearchResult(queryID);
           }, 1000);
           break;
 
@@ -334,6 +378,41 @@ function getSearchResult(queryID, startDate) {
     .catch(showError);
 }
 
+function extractSpan() {
+  switch (appData.spanMode) {
+    case "relative": {
+      const span = parseInt(appData.timeSpan);
+      const now = new Date();
+      const end = new Date(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        now.getUTCHours(),
+        now.getUTCMinutes(),
+        now.getUTCSeconds()
+      );
+
+      const start = new Date(end.getTime() - span * 1000);
+      const end_dt = strftime("%FT%T", end);
+      const start_dt = strftime("%FT%T", start);
+
+      return {
+        start: start_dt,
+        end: end_dt
+      };
+    }
+
+    case "absolute": {
+      const start = new Date(appData.timeBegin);
+      const end = new Date(appData.timeEnd);
+
+      return {
+        start: strftime("%FT%T", start),
+        end: strftime("%FT%T", end)
+      };
+    }
+  }
+}
 function submitQuery(ev) {
   clearError();
 
@@ -350,21 +429,7 @@ function submitQuery(ev) {
   console.log("submit...", ev);
   appData.logs = [];
 
-  const span = parseInt(appData.timeSpan);
-  const now = new Date();
-  const end = new Date(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
-    now.getUTCHours(),
-    now.getUTCMinutes(),
-    now.getUTCSeconds()
-  );
-
-  const start = new Date(end.getTime() - span * 1000);
-  const end_dt = strftime("%FT%T", end);
-  const start_dt = strftime("%FT%T", start);
-  appData.queryStart = now;
+  const span = extractSpan();
 
   appData.queryTerms = appData.query.split(/\s+/).map(x => {
     return { term: x };
@@ -372,9 +437,10 @@ function submitQuery(ev) {
 
   const body = {
     query: appData.queryTerms,
-    start_dt: start_dt,
-    end_dt: end_dt
+    start_dt: span.start,
+    end_dt: span.end
   };
+  console.log("body =>", body);
 
   httpClient
     .post(`/api/v1/search`, body)
@@ -382,26 +448,12 @@ function submitQuery(ev) {
       appData.searchStatus = "Start search";
       appData.queryID = response.data.query_id;
       setTimeout(function() {
-        getSearchResult(response.data.query_id, now);
+        getSearchResult(response.data.query_id);
       }, 1000);
       console.log(response);
     })
     .catch(showError);
 }
-
-export default {
-  data() {
-    return appData;
-  },
-  methods: {
-    saveApiKey: saveApiKey,
-    editApiKey: editApiKey,
-    showApiKey: showApiKey,
-    clearError: clearError,
-    submitQuery: submitQuery,
-    changeSearchResultOffset: changeSearchResultOffset
-  }
-};
 </script>
 <style>
 </style>

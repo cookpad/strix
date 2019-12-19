@@ -30,6 +30,7 @@ type roundTripper func(*http.Request) (*http.Response, error)
 func (f roundTripper) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
 
 func reverseProxy(target string) (gin.HandlerFunc, error) {
+	logger.WithField("target", target).Info("proxy")
 	url, err := url.Parse(target)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Fail to parse endpoint URL: %v", target)
@@ -89,8 +90,8 @@ func runServer(args arguments) error {
 	r.Use(static.Serve("/", static.LocalFile(args.StaticContents, false)))
 
 	r.POST("/api/v1/search", proxy)
-	r.GET("/api/v1/search/:search_id/result", proxy)
-	r.GET("/api/v1/search/:search_id/timeline", proxy)
+	r.GET("/api/v1/search/:search_id/logs", proxy)
+	r.GET("/api/v1/search/:search_id/timeseries", proxy)
 	r.GET("/hello/revision", func(c *gin.Context) {
 		c.String(200, helloReply)
 	})
