@@ -88,6 +88,14 @@ func runServer(args arguments) error {
 	r := gin.Default()
 
 	r.Use(static.Serve("/", static.LocalFile(args.StaticContents, false)))
+	// r.LoadHTMLGlob(path.Join(args.TemplatePath, "*"))
+	/*
+		r.GET("/search/:search_id", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "search.html", gin.H{
+				"searchID": c.Param("search_id"),
+			})
+		})
+	*/
 
 	r.POST("/api/v1/search", proxy)
 	r.GET("/api/v1/search/:search_id/logs", proxy)
@@ -133,7 +141,7 @@ func main() {
 			Destination: &args.BindPort,
 		},
 		cli.StringFlag{
-			Name: "static, s", Value: "./static/",
+			Name: "static, s", Value: "./static",
 			Usage:       "Static contents path",
 			Destination: &args.StaticContents,
 		},

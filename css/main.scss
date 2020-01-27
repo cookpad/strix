@@ -62,7 +62,7 @@ input {
   color: rgba(0, 0, 0, 0.75);
   display: block;
   font-size: 0.875rem;
-  margin: 0 0 1rem 0;
+  // margin: 0 0 rem 0;
   padding: 0.5rem;
   height: 2.3125rem;
   width: 100%;
@@ -91,7 +91,7 @@ div.strix-main {
 
 div.row {
   width: 100%;
-  margin: 20px 10px 5px 10px;
+  margin: 15px 5px 5px 10px;
 
   display: inline-block;
 }
@@ -272,7 +272,7 @@ ul.pagination {
     font-weight: bold;
     cursor: default;
 
-    a {
+    a.offset {
       color: #eee;
     }
   }
@@ -281,10 +281,11 @@ ul.pagination {
     margin: 4px;
     float: left;
 
-    a {
+    a.offset {
       display: inline-block;
       padding: 0.625rem 0.5625rem 0.625rem;
       border-radius: 100% !important;
+      color: #34495e
     }
   }
 }
@@ -301,4 +302,8 @@ ul.pagination:after {
 span.label {
   font-size: 11px;
   padding: 4px 8px 6px 8px;
+}
+
+div.variable {
+  visibility: hidden;
 }
