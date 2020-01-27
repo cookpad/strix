@@ -235,14 +235,6 @@ function submitQuery(ev) {
     .post(`/api/v1/search`, body)
     .then(function(response) {
       console.log(response);
-      /*
-      appData.searchStatus = "Start search";
-      appData.queryID = response.data.query_id;
-
-      setTimeout(function() {
-        getSearchResult(response.data.query_id);
-      }, 1000);
-      */
       router.push("/search/" + response.data.query_id);
     })
     .catch(showError);

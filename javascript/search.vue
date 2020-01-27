@@ -1,6 +1,8 @@
 <template>
   <!-- Log view --->
   <div>
+    <div class="row" v-if="errorMessage !== ''">Error: {{ errorMessage }}</div>
+
     <div class="row" v-if="logs.length > 0">
       <div class="columns metadata-view">
         <div class="metadata">
@@ -21,7 +23,7 @@
               <a
                 class="offset"
                 href="javascript: void(0)"
-                v-on:click="changeSearchResultOffset(p.offset)"
+                v-on:click="changeSearchResultOffset(p.offset, p.current)"
               >{{ p.index + 1 }}</a>
             </li>
           </ul>
@@ -191,6 +193,7 @@ function renderResult(data) {
 
   if (data.logs === null || data.logs.length === 0) {
     appData.errorMessage = "No log found";
+    return;
   }
 
   appData.logs = data.logs.map(x => {
@@ -230,7 +233,6 @@ function renderResult(data) {
       current: data.metadata.offset === i * step
     });
   }
-  console.log("pages:", appData.pages);
 }
 
 function editApiKey(ev) {
@@ -257,8 +259,14 @@ function clearError() {
   appData.errorMessage = null;
 }
 
-function changeSearchResultOffset(offset) {
-  getSearchResult(this.$route.params.search_id, offset);
+function changeSearchResultOffset(offset, current) {
+  if (current) {
+    return;
+  }
+
+  this.$router.push(
+    "/search/" + this.$route.params.search_id + "?offset=" + offset
+  );
 }
 
 function getSearchResult(queryID, offset) {
@@ -266,11 +274,18 @@ function getSearchResult(queryID, offset) {
   appData.logs = [];
   const now = new Date();
 
-  const qs = querystring.stringify({
-    offset: offset
-  });
+  const qs = {};
+  if (offset !== undefined) {
+    qs.offset = offset;
+  }
+
+  const url =
+    `/api/v1/search/${queryID}/logs` +
+    (Object.keys(qs).length > 0 ? "?" + querystring.stringify(qs) : "");
+
+  console.log("URL =>", url, qs);
   httpClient
-    .get(`/api/v1/search/` + queryID + `/logs?` + qs)
+    .get(url)
     .then(function(response) {
       console.log(response);
 
@@ -287,7 +302,7 @@ function getSearchResult(queryID, offset) {
             " seconds";
 
           setTimeout(function() {
-            getSearchResult(queryID);
+            getSearchResult(queryID, offset);
           }, 1000);
           break;
 
@@ -336,7 +351,7 @@ function extractSpan() {
 
 function showSearch() {
   console.log("params =>", this.$route);
-  getSearchResult(this.$route.params.search_id, 0);
+  getSearchResult(this.$route.params.search_id, this.$route.query.offset);
 }
 </script>
 <style>

@@ -272,7 +272,7 @@ ul.pagination {
     font-weight: bold;
     cursor: default;
 
-    a {
+    a.offset {
       color: #eee;
     }
   }
@@ -285,6 +285,7 @@ ul.pagination {
       display: inline-block;
       padding: 0.625rem 0.5625rem 0.625rem;
       border-radius: 100% !important;
+      color: #34495e
     }
   }
 }
