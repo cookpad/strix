@@ -1,7 +1,7 @@
 <template>
   <!-- Log view --->
   <div>
-    <div class="row" v-if="errorMessage !== ''">Error: {{ errorMessage }}</div>
+    <div class="row" v-if="errorMessage !== null">Error: {{ errorMessage }}</div>
 
     <div class="row" v-if="logs.length > 0">
       <div class="columns metadata-view">
@@ -24,7 +24,7 @@
                 class="offset"
                 href="javascript: void(0)"
                 v-on:click="changeSearchResultOffset(p.offset, p.current)"
-              >{{ p.index + 1 }}</a>
+              >{{ p.label }}</a>
             </li>
           </ul>
         </div>
@@ -71,7 +71,7 @@
                 class="offset"
                 href="javascript: void(0)"
                 v-on:click="changeSearchResultOffset(p.offset)"
-              >{{ p.index + 1 }}</a>
+              >{{ p.label }}</a>
             </li>
           </ul>
         </div>
@@ -85,6 +85,7 @@ import strftime from "strftime";
 import querystring from "querystring";
 import SHA1 from "crypto-js/sha1";
 import escapeHTML from "escape-html";
+import { prototype } from "events";
 
 var httpClient = axios.create({
   headers: { "x-api-key": localStorage.getItem("apiKey") }
@@ -187,6 +188,60 @@ function renderLogDataValue(raw) {
   return msg;
 }
 
+function buildPagenationIndices(metadata) {
+  const step = metadata.limit;
+  const bakPages = [];
+  const fwdPages = [];
+  let tgtPages = bakPages;
+  let lastPage;
+  let currentPage;
+
+  for (var i = 0; i * step < metadata.total; i++) {
+    const current = metadata.offset === i * step;
+    const p = {
+      label: i + 1,
+      offset: i * step,
+      current: current,
+      is_link: true
+    };
+
+    if (current) {
+      tgtPages = fwdPages;
+      currentPage = p;
+    } else {
+      tgtPages.push(p);
+    }
+
+    lastPage = p;
+  }
+
+  const pages = [].concat(
+    [
+      {
+        label: "<<",
+        offset: 0,
+        current: false,
+        is_link: true
+      }
+    ],
+    bakPages.length > 5 ? [{ label: "..." }] : [],
+    bakPages.slice(-5),
+    [currentPage],
+    fwdPages.slice(0, 5),
+    fwdPages.length > 5 ? [{ label: "..." }] : [],
+    [
+      {
+        label: ">>",
+        offset: lastPage.offset,
+        current: false,
+        is_link: true
+      }
+    ]
+  );
+
+  return pages;
+}
+
 function renderResult(data) {
   appData.searchStatus = null;
   appData.metadata = data.metadata;
@@ -224,15 +279,7 @@ function renderResult(data) {
     };
   });
 
-  appData.pages = [];
-  const step = data.metadata.limit;
-  for (var i = 0; i * step < data.metadata.total; i++) {
-    appData.pages.push({
-      index: i,
-      offset: i * step,
-      current: data.metadata.offset === i * step
-    });
-  }
+  appData.pages = buildPagenationIndices(data.metadata);
 }
 
 function editApiKey(ev) {
@@ -260,7 +307,7 @@ function clearError() {
 }
 
 function changeSearchResultOffset(offset, current) {
-  if (current) {
+  if (current || offset === undefined) {
     return;
   }
 
