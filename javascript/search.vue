@@ -1,83 +1,6 @@
 <template>
-  <div style="strix-main">
-    <div class="row">
-      <input
-        type="text"
-        autofocus
-        autocomplete="off"
-        placeholder="show your query"
-        v-model="query"
-        @keyup.enter="submitQuery"
-      />
-    </div>
-    <div class="row">
-      <div class="columns">
-        <select v-model="spanMode">
-          <option value="relative" selected>Last</option>
-          <option value="absolute">Between</option>
-        </select>
-      </div>
-
-      <div class="columns" v-if="spanMode == 'relative'">
-        <select v-model="timeSpan" class="timespan">
-          <option value="3600" selected>1 hour</option>
-          <option value="7200">2 hours</option>
-          <option value="14400">4 hours</option>
-          <option value="28800">8 hours</option>
-          <option value="86400">1 day</option>
-          <option value="172800">2 day</option>
-          <option value="345600">4 day</option>
-          <option value="604800">1 week</option>
-          <option value="1209600">2 week</option>
-          <option value="2419200">4 week</option>
-        </select>
-      </div>
-
-      <div class="columns" v-if="spanMode === 'absolute'">
-        <input type="datetime-local" v-model="timeBegin" />
-        To
-        <input type="datetime-local" v-model="timeEnd" />
-      </div>
-      <div class="columns">
-        <button class="send_query thin2" v-on:click="submitQuery">Query</button>
-      </div>
-      <div class="columns">
-        <button
-          class="secondary thin2"
-          v-on:click="showApiKey"
-          v-if="!showApiKeyForm"
-        >Change API Key</button>
-      </div>
-    </div>
-
-    <div class="row" v-if="showApiKeyForm">
-      <div class="columns" style="text-align: right;">
-        <h4>API Key</h4>
-      </div>
-      <div class="columns">
-        <input type="text" v-model="apiKey" />
-      </div>
-      <div class="columns">
-        <button class="highlight thin" v-on:click="saveApiKey">Save</button>
-      </div>
-    </div>
-
-    <div class="row" v-if="searchStatus !== null">
-      <div class="columns query-status">
-        <div class="alert-box radius">{{ searchStatus }}</div>
-      </div>
-    </div>
-
-    <div class="row" v-if="errorMessage !== null">
-      <div class="columns">
-        <div class="alert-box alert">[Error] {{ errorMessage }}</div>
-      </div>
-      <div class="columns">
-        <button class="alert-dark" v-on:click="clearError()">Dismiss</button>
-      </div>
-    </div>
-
-    <!-- Log view --->
+  <!-- Log view --->
+  <div>
     <div class="row" v-if="logs.length > 0">
       <div class="columns metadata-view">
         <div class="metadata">
@@ -88,14 +11,18 @@
       </div>
 
       <!-- TODO: add "columns" class.
-      Originally the <div> also should have "column", but layout will be broken if value is too long.
+    Originally the <div> also should have "column", but layout will be broken if value is too long.
       I'm not good CSS writer for now-->
       <div class="log-view">
         <!-- Pagenation (header) -->
         <div v-if="pages.length > 0">
           <ul class="pagination">
             <li v-for="p in pages" v-bind:class="{current: p.current}">
-              <a href="#" v-on:click="changeSearchResultOffset(p.offset)">{{ p.index + 1 }}</a>
+              <a
+                class="offset"
+                href="javascript: void(0)"
+                v-on:click="changeSearchResultOffset(p.offset)"
+              >{{ p.index + 1 }}</a>
             </li>
           </ul>
         </div>
@@ -138,7 +65,11 @@
         <div v-if="pages.length > 0">
           <ul class="pagination">
             <li v-for="p in pages" v-bind:class="{current: p.current}">
-              <a href="#" v-on:click="changeSearchResultOffset(p.offset)">{{ p.index + 1 }}</a>
+              <a
+                class="offset"
+                href="javascript: void(0)"
+                v-on:click="changeSearchResultOffset(p.offset)"
+              >{{ p.index + 1 }}</a>
             </li>
           </ul>
         </div>
@@ -184,21 +115,24 @@ const appData = {
   spanMode: "relative"
 };
 
-setInterval(() => {
-  console.log(appData.timeBegin);
-}, 1000);
-
 export default {
   data() {
     return appData;
   },
   methods: {
-    saveApiKey: saveApiKey,
-    editApiKey: editApiKey,
-    showApiKey: showApiKey,
-    clearError: clearError,
-    submitQuery: submitQuery,
-    changeSearchResultOffset: changeSearchResultOffset
+    changeSearchResultOffset: changeSearchResultOffset,
+    showSearch: showSearch
+  },
+  mounted() {
+    this.showSearch();
+  },
+  watch: {
+    $route(to, from) {
+      console.log(from, "=>", to);
+      if (to.matched[0].path === "/search/:search_id") {
+        this.showSearch();
+      }
+    }
   }
 };
 
@@ -255,47 +189,48 @@ function renderResult(data) {
   appData.searchStatus = null;
   appData.metadata = data.metadata;
 
-  if (data.logs !== null && data.logs.length > 0) {
-    appData.logs = data.logs.map(x => {
-      const bgColor =
-        "#" +
-        SHA1(x.tag)
-          .toString()
-          .substring(0, 6);
-
-      return {
-        tag: x.tag,
-        datetime: strftime("%F %T%z", new Date(x.timestamp * 1000)),
-        data: Object.keys(x.log).map(k => {
-          const v =
-            typeof x.log[k] === "object"
-              ? JSON.stringify(x.log[k], null, 4)
-              : x.log[k];
-
-          return {
-            k: k,
-            v: renderLogDataValue(v)
-          };
-        }),
-        labelStyle: {
-          "background-color": bgColor,
-          color: toTextColor(bgColor)
-        }
-      };
-    });
-
-    appData.pages = [];
-    const step = data.metadata.limit;
-    for (var i = 0; i * step < data.metadata.total; i++) {
-      appData.pages.push({
-        index: i,
-        offset: i * step,
-        current: data.metadata.offset === i * step
-      });
-    }
-  } else {
+  if (data.logs === null || data.logs.length === 0) {
     appData.errorMessage = "No log found";
   }
+
+  appData.logs = data.logs.map(x => {
+    const bgColor =
+      "#" +
+      SHA1(x.tag)
+        .toString()
+        .substring(0, 6);
+
+    return {
+      tag: x.tag,
+      datetime: strftime("%F %T%z", new Date(x.timestamp * 1000)),
+      data: Object.keys(x.log).map(k => {
+        const v =
+          typeof x.log[k] === "object"
+            ? JSON.stringify(x.log[k], null, 4)
+            : x.log[k];
+
+        return {
+          k: k,
+          v: renderLogDataValue(v)
+        };
+      }),
+      labelStyle: {
+        "background-color": bgColor,
+        color: toTextColor(bgColor)
+      }
+    };
+  });
+
+  appData.pages = [];
+  const step = data.metadata.limit;
+  for (var i = 0; i * step < data.metadata.total; i++) {
+    appData.pages.push({
+      index: i,
+      offset: i * step,
+      current: data.metadata.offset === i * step
+    });
+  }
+  console.log("pages:", appData.pages);
 }
 
 function editApiKey(ev) {
@@ -323,34 +258,19 @@ function clearError() {
 }
 
 function changeSearchResultOffset(offset) {
+  getSearchResult(this.$route.params.search_id, offset);
+}
+
+function getSearchResult(queryID, offset) {
+  console.log("qurey =>", queryID, offset);
   appData.logs = [];
+  const now = new Date();
+
   const qs = querystring.stringify({
     offset: offset
   });
   httpClient
-    .get(`/api/v1/search/` + appData.queryID + `/logs?` + qs)
-    .then(function(response) {
-      console.log(response);
-      switch (response.data.metadata.status) {
-        case "SUCCEEDED":
-          renderResult(response.data);
-          break;
-        default:
-          showError(
-            "Fail request (Status is not SUCCEEDED): " +
-              response.data.metadata.status
-          );
-          break;
-      }
-    })
-    .catch(showError);
-}
-
-function getSearchResult(queryID) {
-  const now = new Date();
-
-  httpClient
-    .get(`/api/v1/search/` + queryID + `/logs`)
+    .get(`/api/v1/search/` + queryID + `/logs?` + qs)
     .then(function(response) {
       console.log(response);
 
@@ -413,46 +333,10 @@ function extractSpan() {
     }
   }
 }
-function submitQuery(ev) {
-  clearError();
 
-  if (appData.apiKey === "") {
-    showError("API key required");
-    return;
-  }
-
-  if (appData.query === "") {
-    showError("No query");
-    return;
-  }
-
-  console.log("submit...", ev);
-  appData.logs = [];
-
-  const span = extractSpan();
-
-  appData.queryTerms = appData.query.split(/\s+/).map(x => {
-    return { term: x };
-  });
-
-  const body = {
-    query: appData.queryTerms,
-    start_dt: span.start,
-    end_dt: span.end
-  };
-  console.log("body =>", body);
-
-  httpClient
-    .post(`/api/v1/search`, body)
-    .then(function(response) {
-      appData.searchStatus = "Start search";
-      appData.queryID = response.data.query_id;
-      setTimeout(function() {
-        getSearchResult(response.data.query_id);
-      }, 1000);
-      console.log(response);
-    })
-    .catch(showError);
+function showSearch() {
+  console.log("params =>", this.$route);
+  getSearchResult(this.$route.params.search_id, 0);
 }
 </script>
 <style>
