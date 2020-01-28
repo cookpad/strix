@@ -1,14 +1,25 @@
 <template>
   <!-- Log view --->
   <div>
-    <div class="row" v-if="errorMessage !== null">Error: {{ errorMessage }}</div>
+    <div class="row" v-if="errorMessage !== null">
+      <div class="columns">
+        <div class="msgbox alert">[Error] {{ errorMessage }}</div>
+      </div>
+      <div class="columns">
+        <button class="alert-dark thin2" v-on:click="clearError()">Dismiss</button>
+      </div>
+    </div>
 
-    <div class="row" v-if="logs.length > 0">
+    <div class="row">
       <div class="columns metadata-view">
         <div class="metadata">
           <h3 class="metadata">Results</h3>
-          <div class="content">Elapsed time: {{ metadata.elapsed_seconds }} seconds</div>
-          <div class="content">Total: {{ metadata.total }} logs</div>
+          <div v-if="metadata !== null">
+            <div class="content">Elapsed time: {{ metadata.elapsed_seconds }} seconds</div>
+            <div class="content">Total: {{ metadata.total }} logs</div>
+            <div class="content">SubTotal: {{ metadata.sub_total }} logs</div>
+            <div class="content">Tags: {{ metadata.tags }}</div>
+          </div>
         </div>
       </div>
 
@@ -16,8 +27,22 @@
     Originally the <div> also should have "column", but layout will be broken if value is too long.
       I'm not good CSS writer for now-->
       <div class="log-view">
+        <div class="subrow">
+          <input
+            type="text"
+            class="filter-query"
+            autofocus
+            autocomplete="off"
+            placeholder="filter (write jq grammer)"
+            v-model="query"
+            @keyup.enter="renewJqQuery"
+          />
+        </div>
+
+        <div class="subrow msgbox sysmsg" v-if="systemMessage !== null">{{ systemMessage }}</div>
+
         <!-- Pagenation (header) -->
-        <div v-if="pages.length > 0">
+        <div class="subrow" v-if="pages.length > 0">
           <ul class="pagination">
             <li v-for="p in pages" v-bind:class="{current: p.current}">
               <a
@@ -30,7 +55,7 @@
         </div>
 
         <!-- Log view -->
-        <div>
+        <div class="subrow" v-if="logs.length > 0">
           <table class="log-view">
             <thead>
               <tr>
@@ -64,7 +89,7 @@
         </div>
 
         <!-- Pagenation (footer) -->
-        <div v-if="pages.length > 0">
+        <div class="subrow" v-if="pages.length > 0">
           <ul class="pagination">
             <li v-for="p in pages" v-bind:class="{current: p.current}">
               <a
@@ -102,20 +127,19 @@ const utcDatetime = new Date(
 );
 
 const appData = {
-  query: "",
-  queryTerms: [],
+  // In this component, "query" means query of jq for filtering.
+  query: null,
   searchStatus: null,
-  queryID: null,
   apiKey: localStorage.getItem("apiKey"),
-  showApiKeyForm: localStorage.getItem("apiKey") === null,
   logs: [],
   pages: [],
-  metadata: {},
-  timeSpan: 3600,
-  timeBegin: strftime("%Y-%m-%dT%H:%M", utcDatetime),
-  timeEnd: strftime("%Y-%m-%dT%H:%M", utcDatetime),
+  metadata: null,
   errorMessage: null,
-  spanMode: "relative"
+  systemMessage: null,
+
+  // lastQueryString will be set this.$route.query
+  lastQueryString: null,
+  search_id: null
 };
 
 export default {
@@ -124,14 +148,16 @@ export default {
   },
   methods: {
     changeSearchResultOffset: changeSearchResultOffset,
-    showSearch: showSearch
+    showSearch: showSearch,
+    renewJqQuery: renewJqQuery,
+    clearError: clearError
   },
   mounted() {
     this.showSearch();
   },
   watch: {
     $route(to, from) {
-      console.log(from, "=>", to);
+      console.log(from, " => ", to);
       if (to.matched[0].path === "/search/:search_id") {
         this.showSearch();
       }
@@ -162,9 +188,9 @@ function toTextColor(color) {
   return Cw < Cb ? "#000" : "#fff";
 }
 
-function renderLogDataValue(raw) {
+function renderLogDataValue(raw, queryTerms) {
   let values = [escapeHTML(raw)];
-  const terms = appData.queryTerms.map(x => x.term);
+  const terms = queryTerms.map(x => x.term);
 
   terms.forEach(t => {
     values = values
@@ -189,6 +215,10 @@ function renderLogDataValue(raw) {
 }
 
 function buildPagenationIndices(metadata) {
+  if (metadata.sub_total === 0) {
+    return []; // No page index
+  }
+
   const step = metadata.limit;
   const bakPages = [];
   const fwdPages = [];
@@ -196,7 +226,7 @@ function buildPagenationIndices(metadata) {
   let lastPage;
   let currentPage;
 
-  for (var i = 0; i * step < metadata.total; i++) {
+  for (var i = 0; i * step < metadata.sub_total; i++) {
     const current = metadata.offset === i * step;
     const p = {
       label: i + 1,
@@ -245,9 +275,11 @@ function buildPagenationIndices(metadata) {
 function renderResult(data) {
   appData.searchStatus = null;
   appData.metadata = data.metadata;
+  appData.pages = buildPagenationIndices(data.metadata);
 
   if (data.logs === null || data.logs.length === 0) {
-    appData.errorMessage = "No log found";
+    appData.systemMessage = "No log found";
+    appData.logs = [];
     return;
   }
 
@@ -269,7 +301,8 @@ function renderResult(data) {
 
         return {
           k: k,
-          v: renderLogDataValue(v)
+          // v: renderLogDataValue(v)
+          v: v
         };
       }),
       labelStyle: {
@@ -278,24 +311,6 @@ function renderResult(data) {
       }
     };
   });
-
-  appData.pages = buildPagenationIndices(data.metadata);
-}
-
-function editApiKey(ev) {
-  appData.showApiKeyForm = true;
-}
-
-function saveApiKey(ev) {
-  appData.showApiKeyForm = false;
-  localStorage.setItem("apiKey", appData.apiKey);
-  httpClient = axios.create({
-    headers: { "x-api-key": appData.apiKey }
-  });
-}
-
-function showApiKey() {
-  appData.showApiKeyForm = true;
 }
 
 function showError(errMsg) {
@@ -306,31 +321,37 @@ function clearError() {
   appData.errorMessage = null;
 }
 
+function renewSearchResult(router, newQuery) {
+  const qs = Object.assign(appData.lastQueryString, newQuery);
+
+  const url =
+    `/search/${appData.search_id}` +
+    (Object.keys(qs).length > 0 ? "?" + querystring.stringify(qs) : "");
+  console.log("renew => ", url);
+  router.push(url);
+}
+
+function renewJqQuery() {
+  renewSearchResult(this.$router, { query: appData.query });
+}
+
 function changeSearchResultOffset(offset, current) {
   if (current || offset === undefined) {
     return;
   }
 
-  this.$router.push(
-    "/search/" + this.$route.params.search_id + "?offset=" + offset
-  );
+  renewSearchResult(this.$router, { offset: offset });
 }
 
-function getSearchResult(queryID, offset) {
-  console.log("qurey =>", queryID, offset);
-  appData.logs = [];
+function getSearchResult(search_id, qs) {
+  clearError();
+  appData.systemMessage = null;
   const now = new Date();
 
-  const qs = {};
-  if (offset !== undefined) {
-    qs.offset = offset;
-  }
-
   const url =
-    `/api/v1/search/${queryID}/logs` +
+    `/api/v1/search/${search_id}/logs` +
     (Object.keys(qs).length > 0 ? "?" + querystring.stringify(qs) : "");
 
-  console.log("URL =>", url, qs);
   httpClient
     .get(url)
     .then(function(response) {
@@ -349,7 +370,7 @@ function getSearchResult(queryID, offset) {
             " seconds";
 
           setTimeout(function() {
-            getSearchResult(queryID, offset);
+            getSearchResult(search_id, qs);
           }, 1000);
           break;
 
@@ -357,48 +378,19 @@ function getSearchResult(queryID, offset) {
           showError("Fail request: " + response.data.metadata.status);
       }
     })
-    .catch(showError);
-}
-
-function extractSpan() {
-  switch (appData.spanMode) {
-    case "relative": {
-      const span = parseInt(appData.timeSpan);
-      const now = new Date();
-      const end = new Date(
-        now.getUTCFullYear(),
-        now.getUTCMonth(),
-        now.getUTCDate(),
-        now.getUTCHours(),
-        now.getUTCMinutes(),
-        now.getUTCSeconds()
-      );
-
-      const start = new Date(end.getTime() - span * 1000);
-      const end_dt = strftime("%FT%T", end);
-      const start_dt = strftime("%FT%T", start);
-
-      return {
-        start: start_dt,
-        end: end_dt
-      };
-    }
-
-    case "absolute": {
-      const start = new Date(appData.timeBegin);
-      const end = new Date(appData.timeEnd);
-
-      return {
-        start: strftime("%FT%T", start),
-        end: strftime("%FT%T", end)
-      };
-    }
-  }
+    .catch(err => {
+      console.log("Error: ", err, err.request, err.response);
+      if (err.response && err.response.data.message) {
+        showError(err.response.data.message);
+      }
+    });
 }
 
 function showSearch() {
-  console.log("params =>", this.$route);
-  getSearchResult(this.$route.params.search_id, this.$route.query.offset);
+  appData.search_id = this.$route.params.search_id;
+  appData.query = this.$route.query.query;
+  appData.lastQueryString = Object.assign({}, this.$route.query);
+  getSearchResult(this.$route.params.search_id, this.$route.query);
 }
 </script>
 <style>

@@ -70,21 +70,10 @@
 
     <div class="row" v-if="errorMessage !== null">
       <div class="columns">
-        <div class="alert-box alert">[Error] {{ errorMessage }}</div>
+        <div class="msgbox alert">[Error] {{ errorMessage }}</div>
       </div>
       <div class="columns">
-        <button class="alert-dark" v-on:click="clearError()">Dismiss</button>
-      </div>
-    </div>
-
-    <!-- Log view --->
-    <div class="row" v-if="logs.length > 0">
-      <div class="columns metadata-view">
-        <div class="metadata">
-          <h3 class="metadata">Results</h3>
-          <div class="content">Elapsed time: {{ metadata.elapsed_seconds }} seconds</div>
-          <div class="content">Total: {{ metadata.total }} logs</div>
-        </div>
+        <button class="alert-dark thin2" v-on:click="clearError()">Dismiss</button>
       </div>
     </div>
   </div>
@@ -118,8 +107,6 @@ const appData = {
   queryID: null,
   apiKey: localStorage.getItem("apiKey"),
   showApiKeyForm: localStorage.getItem("apiKey") === null,
-  logs: [],
-  pages: [],
   metadata: {},
   timeSpan: 3600,
   timeBegin: strftime("%Y-%m-%dT%H:%M", utcDatetime),
