@@ -18,7 +18,13 @@
             <div class="content">Elapsed time: {{ metadata.elapsed_seconds }} seconds</div>
             <div class="content">Total: {{ metadata.total }} logs</div>
             <div class="content">SubTotal: {{ metadata.sub_total }} logs</div>
-            <div class="content">Tags: {{ metadata.tags }}</div>
+            <div class="content">
+              <div>Tags:</div>
+              <div v-for="(tag, i) in metadata.tags" class="tag-selector">
+                <input type="checkbox" v-model="tags[tag]" v-on:change="changeSearchResultTags" />
+                {{ tag }}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -129,6 +135,7 @@ const utcDatetime = new Date(
 const appData = {
   // In this component, "query" means query of jq for filtering.
   query: null,
+  tags: [],
   searchStatus: null,
   apiKey: localStorage.getItem("apiKey"),
   logs: [],
@@ -148,6 +155,7 @@ export default {
   },
   methods: {
     changeSearchResultOffset: changeSearchResultOffset,
+    changeSearchResultTags: changeSearchResultTags,
     showSearch: showSearch,
     renewJqQuery: renewJqQuery,
     clearError: clearError
@@ -227,6 +235,7 @@ function buildPagenationIndices(metadata) {
   let currentPage;
 
   for (var i = 0; i * step < metadata.sub_total; i++) {
+    console.log("c =>", metadata.offset, i, step);
     const current = metadata.offset === i * step;
     const p = {
       label: i + 1,
@@ -256,7 +265,7 @@ function buildPagenationIndices(metadata) {
     ],
     bakPages.length > 5 ? [{ label: "..." }] : [],
     bakPages.slice(-5),
-    [currentPage],
+    currentPage !== undefined ? [currentPage] : [],
     fwdPages.slice(0, 5),
     fwdPages.length > 5 ? [{ label: "..." }] : [],
     [
@@ -269,19 +278,38 @@ function buildPagenationIndices(metadata) {
     ]
   );
 
+  console.log("currentPage", currentPage);
+  console.log("pages", pages);
+
   return pages;
 }
 
 function renderResult(data) {
   appData.searchStatus = null;
   appData.metadata = data.metadata;
-  appData.pages = buildPagenationIndices(data.metadata);
 
   if (data.logs === null || data.logs.length === 0) {
     appData.systemMessage = "No log found";
     appData.logs = [];
     return;
   }
+
+  const enabledTags = {};
+  if (appData.lastQueryString.tags === undefined) {
+    data.metadata.tags.forEach(tag => {
+      enabledTags[tag] = true;
+    });
+  } else {
+    appData.lastQueryString.tags.split(",").forEach(tag => {
+      enabledTags[tag] = true;
+    });
+  }
+  data.metadata.tags.forEach(t => {
+    appData.tags[t] = enabledTags[t] ? true : false;
+  });
+
+  appData.pages = buildPagenationIndices(data.metadata);
+  console.log("Built pagenation indices =>", appData.pages);
 
   appData.logs = data.logs.map(x => {
     const bgColor =
@@ -322,7 +350,14 @@ function clearError() {
 }
 
 function renewSearchResult(router, newQuery) {
+  appData.systemMessage = null;
+
   const qs = Object.assign(appData.lastQueryString, newQuery);
+  Object.keys(newQuery).forEach(k => {
+    if (newQuery[k] === null) {
+      delete qs[k];
+    }
+  });
 
   const url =
     `/search/${appData.search_id}` +
@@ -343,9 +378,21 @@ function changeSearchResultOffset(offset, current) {
   renewSearchResult(this.$router, { offset: offset });
 }
 
+function changeSearchResultTags(args) {
+  console.log(appData.tags);
+
+  if (Object.keys(appData.tags).every(v => appData.tags[v])) {
+    renewSearchResult(this.$router, { tags: null });
+  } else {
+    const tags = Object.keys(appData.tags)
+      .map(t => (appData.tags[t] ? t : null))
+      .filter(x => x !== null);
+    renewSearchResult(this.$router, { tags: tags.join(",") });
+  }
+}
+
 function getSearchResult(search_id, qs) {
   clearError();
-  appData.systemMessage = null;
   const now = new Date();
 
   const url =
@@ -355,16 +402,15 @@ function getSearchResult(search_id, qs) {
   httpClient
     .get(url)
     .then(function(response) {
-      console.log(response);
-
       switch (response.data.metadata.status) {
         case "SUCCEEDED":
+          appData.systemMessage = null;
           renderResult(response.data);
           break;
 
         case "RUNNING":
           const now = new Date();
-          appData.searchStatus =
+          appData.systemMessage =
             "Elapsed time: " +
             Math.floor(response.data.metadata.elapsed_seconds * 100) / 100 +
             " seconds";

@@ -63,7 +63,7 @@ select {
   height: 2.3125rem;
 }
 
-input {
+input[type=text] {
   -webkit-appearance: none;
   background-color: #fff;
   font-family: inherit;
@@ -161,10 +161,14 @@ div.sysmsg {
 div.metadata {
   border: 1px solid #ccc;
   width: 240px;
+  font-family: "Open Sans";
 
   div.content {
-    margin: 20px 10px;
+    margin: 0.5rem;
+    line-height: 1.2rem;
   }
+
+  div.tag-selector {}
 }
 
 button.alert-dark {
