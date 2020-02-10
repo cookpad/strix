@@ -62,9 +62,6 @@
 <script>
 import axios from "axios";
 import strftime from "strftime";
-import querystring from "querystring";
-import SHA1 from "crypto-js/sha1";
-import escapeHTML from "escape-html";
 
 const nowDatetime = new Date();
 const utcDatetime = new Date(
@@ -78,9 +75,6 @@ const utcDatetime = new Date(
 
 const appData = {
   query: "",
-  queryTerms: [],
-  queryID: null,
-  metadata: {},
   timeSpan: 3600,
   timeBegin: strftime("%Y-%m-%dT%H:%M", utcDatetime),
   timeEnd: strftime("%Y-%m-%dT%H:%M", utcDatetime),
@@ -104,29 +98,10 @@ export default {
       });
   },
   methods: {
-    saveApiKey: saveApiKey,
-    editApiKey: editApiKey,
-    showApiKey: showApiKey,
     clearError: clearError,
     submitQuery: submitQuery
   }
 };
-
-function editApiKey(ev) {
-  appData.showApiKeyForm = true;
-}
-
-function saveApiKey(ev) {
-  appData.showApiKeyForm = false;
-  localStorage.setItem("apiKey", appData.apiKey);
-  httpClient = axios.create({
-    headers: { "x-api-key": appData.apiKey }
-  });
-}
-
-function showApiKey() {
-  appData.showApiKeyForm = true;
-}
 
 function showError(err) {
   console.log(err);
@@ -195,12 +170,12 @@ function submitQuery(ev) {
 
   const span = extractSpan();
 
-  appData.queryTerms = appData.query.split(/\s+/).map(x => {
+  terms = appData.query.split(/\s+/).map(x => {
     return { term: x };
   });
 
   const body = {
-    query: appData.queryTerms,
+    query: terms,
     start_dt: span.start,
     end_dt: span.end
   };

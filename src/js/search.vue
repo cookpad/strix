@@ -118,10 +118,6 @@ import SHA1 from "crypto-js/sha1";
 import escapeHTML from "escape-html";
 import { prototype } from "events";
 
-var httpClient = axios.create({
-  headers: { "x-api-key": localStorage.getItem("apiKey") }
-});
-
 const nowDatetime = new Date();
 const utcDatetime = new Date(
   nowDatetime.getUTCFullYear(),
@@ -137,7 +133,6 @@ const appData = {
   query: null,
   tags: [],
   searchStatus: null,
-  apiKey: localStorage.getItem("apiKey"),
   logs: [],
   pages: [],
   metadata: null,
@@ -399,7 +394,7 @@ function getSearchResult(search_id, qs) {
     `/api/v1/search/${search_id}/logs` +
     (Object.keys(qs).length > 0 ? "?" + querystring.stringify(qs) : "");
 
-  httpClient
+  axios
     .get(url)
     .then(function(response) {
       switch (response.data.metadata.status) {

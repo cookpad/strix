@@ -53,7 +53,6 @@ func reverseProxy(authz *authzService, apiKey, target string) (gin.HandlerFunc, 
 				req.URL.Path = url.Path + req.URL.Path
 				req.Header.Set("x-api-key", apiKey)
 				req.Header.Set("minerva-allowed-tags", tags)
-				logger.WithField("header", req.Header).Info("API requet header")
 			},
 		}).ServeHTTP(c.Writer, c.Request)
 
