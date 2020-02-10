@@ -93,7 +93,18 @@ nav.strix-header {
   margin: 0px;
   padding: 10px 10px;
 
-  div.header-item a {
+  div.header-item {
+    a {
+      color: #eee;
+    }
+  }
+}
+
+div.login {
+  background-color: #e74c3c;
+  border-color: #ab3326;
+
+  a {
     color: #eee;
   }
 }
@@ -102,6 +113,7 @@ div.strix-main {
   padding-top: 30px;
   padding-bottom: 30px;
 }
+
 
 div.row {
   width: 100%;

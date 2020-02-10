@@ -2,17 +2,17 @@ package main
 
 import (
 	"fmt"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
+	"math/rand"
 	"os"
 	"time"
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
+
+	"github.com/gin-contrib/sessions"
+	"github.com/gin-contrib/sessions/cookie"
 )
 
 var logger = logrus.New()
@@ -25,42 +25,18 @@ var logLevelMap = map[string]logrus.Level{
 	"error": logrus.ErrorLevel,
 }
 
-type roundTripper func(*http.Request) (*http.Response, error)
-
-func (f roundTripper) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
-
-func reverseProxy(target string) (gin.HandlerFunc, error) {
-	logger.WithField("target", target).Info("proxy")
-	url, err := url.Parse(target)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Fail to parse endpoint URL: %v", target)
-	}
-
-	requestHandler := func(req *http.Request) (*http.Response, error) {
-		req.Host = url.Host
-		return http.DefaultTransport.RoundTrip(req)
-	}
-
-	proxy := &httputil.ReverseProxy{
-		Transport: roundTripper(requestHandler),
-		Director: func(req *http.Request) {
-			req.URL.Host = url.Host
-			req.URL.Scheme = url.Scheme
-			req.URL.Path = url.Path + req.URL.Path
-		},
-	}
-
-	return func(c *gin.Context) {
-		proxy.ServeHTTP(c.Writer, c.Request)
-	}, nil
-}
-
 type arguments struct {
 	LogLevel       string
 	Endpoint       string
 	BindAddress    string
 	BindPort       int
 	StaticContents string
+
+	// Google OAuth options
+	GoogleOAuthConfig string
+
+	// JWT
+	JWTSecret string
 }
 
 func runServer(args arguments) error {
@@ -70,7 +46,6 @@ func runServer(args arguments) error {
 	}
 	logger.SetLevel(level)
 	logger.SetFormatter(&logrus.JSONFormatter{})
-
 	logger.WithFields(logrus.Fields{
 		"args": args,
 	}).Info("Given options")
@@ -80,35 +55,62 @@ func runServer(args arguments) error {
 		helloReply = time.Now().String()
 	}
 
-	proxy, err := reverseProxy(args.Endpoint)
-	if err != nil {
-		return err
-	}
-
 	r := gin.Default()
-
+	store := cookie.NewStore([]byte("auth"))
+	r.Use(sessions.Sessions("strix", store))
 	r.Use(static.Serve("/", static.LocalFile(args.StaticContents, false)))
-	// r.LoadHTMLGlob(path.Join(args.TemplatePath, "*"))
 	/*
-		r.GET("/search/:search_id", func(c *gin.Context) {
-			c.HTML(http.StatusOK, "search.html", gin.H{
-				"searchID": c.Param("search_id"),
+		r.LoadHTMLGlob(path.Join(args.TemplatePath, "*"))
+		r.GET("/", func(c *gin.Context) {
+			c.HTML(http.StatusOK, "index.html", gin.H{
+				"googleOAuth": (args.GoogleOAuthConfig != ""),
 			})
 		})
 	*/
-
-	r.POST("/api/v1/search", proxy)
-	r.GET("/api/v1/search/:search_id/logs", proxy)
-	r.GET("/api/v1/search/:search_id/timeseries", proxy)
 	r.GET("/hello/revision", func(c *gin.Context) {
 		c.String(200, helloReply)
 	})
+
+	ssnMgr := newSessionManager(args.JWTSecret)
+
+	authGroup := r.Group("/auth")
+	if err := setupAuth(ssnMgr, authGroup); err != nil {
+		return err
+	}
+	if args.GoogleOAuthConfig != "" {
+		if err := setupAuthGoogle(ssnMgr, args.GoogleOAuthConfig, authGroup); err != nil {
+			return err
+		}
+	}
+
+	apiGroup := r.Group("/api/v1")
+	if err := setupAPI(ssnMgr, args.Endpoint, apiGroup); err != nil {
+		return err
+	}
 
 	if err := r.Run(fmt.Sprintf("%s:%d", args.BindAddress, args.BindPort)); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func genRandomSecret() string {
+	const randomSecretLength = 32
+	letters := "abcdefghijklmnopqrstuvwxyz" +
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+		"0123456789"
+
+	src := rand.NewSource(time.Now().UnixNano())
+	rnd := rand.New(src)
+
+	var secret string
+	for i := 0; i < randomSecretLength; i++ {
+		n := rnd.Intn(len(letters))
+		secret = secret + string(letters[n])
+	}
+
+	return secret
 }
 
 func main() {
@@ -144,6 +146,18 @@ func main() {
 			Name: "static, s", Value: "./static",
 			Usage:       "Static contents path",
 			Destination: &args.StaticContents,
+		},
+
+		cli.StringFlag{
+			Name:        "google-oauth-config, g",
+			Usage:       "Google OAuth config JSON file",
+			Destination: &args.GoogleOAuthConfig,
+		},
+		cli.StringFlag{
+			Name:        "jwt-secret, j",
+			Value:       genRandomSecret(),
+			Usage:       "JWT secret to sign and validate token",
+			Destination: &args.GoogleOAuthConfig,
 		},
 	}
 	app.ArgsUsage = "[endpoint]"

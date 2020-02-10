@@ -1,3 +1,5 @@
 node_modules
 static/js/bundle.js
 strix
+/*.json
+/*.sh

@@ -6,9 +6,11 @@ import "babel-polyfill";
 import Vue from "vue";
 import VueRouter from "vue-router"
 
-import Query from "./query.vue";
+import Header from "./header.vue";
 import Search from "./search.vue";
+import Query from "./query.vue";
 
+Vue.component('strix-header', Header);
 Vue.component('strix-query', Query);
 Vue.component('strix-search', Search);
 Vue.use(VueRouter);
@@ -19,6 +21,7 @@ const router = new VueRouter({
       path: '/search/:search_id',
       component: {
         template: `<div>
+        <strix-header></strix-header>
         <strix-query></strix-query>
         <strix-search></strix-search>
         </div>`
@@ -28,6 +31,7 @@ const router = new VueRouter({
       path: '/',
       component: {
         template: `<div>
+        <strix-header></strix-header>
         <strix-query></strix-query>
         </div>`,
       },
