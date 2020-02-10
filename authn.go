@@ -26,9 +26,16 @@ type sessionManager struct {
 }
 
 func newSessionManager(jwtSecret string) *sessionManager {
-	return &sessionManager{
-		jwtSecret: []byte(jwtSecret),
+	mgr := &sessionManager{}
+
+	if jwtSecret == "" {
+		logger.Warn("jwt-secret is not set, then automatically generated")
+		mgr.jwtSecret = []byte(genRandomSecret())
+	} else {
+		mgr.jwtSecret = []byte(jwtSecret)
 	}
+
+	return mgr
 }
 
 func (x *sessionManager) sign(user strixUser, c *gin.Context) error {

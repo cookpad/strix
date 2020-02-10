@@ -7,9 +7,6 @@
         </h1>
       </div>
     </nav>
-    <div class="msgbox login">
-      <a href="/auth/google">Google</a>
-    </div>
   </div>
 </template>
 

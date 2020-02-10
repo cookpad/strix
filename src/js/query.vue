@@ -42,29 +42,9 @@
         <button class="send_query thin2" v-on:click="submitQuery">Query</button>
       </div>
       <div class="columns">
-        <button
-          class="secondary thin2"
-          v-on:click="showApiKey"
-          v-if="!showApiKeyForm"
-        >Change API Key</button>
-      </div>
-    </div>
-
-    <div class="row" v-if="showApiKeyForm">
-      <div class="columns" style="text-align: right;">
-        <h4>API Key</h4>
-      </div>
-      <div class="columns">
-        <input type="text" v-model="apiKey" />
-      </div>
-      <div class="columns">
-        <button class="highlight thin" v-on:click="saveApiKey">Save</button>
-      </div>
-    </div>
-
-    <div class="row" v-if="searchStatus !== null">
-      <div class="columns query-status">
-        <div class="alert-box radius">{{ searchStatus }}</div>
+        <button class="secondary thin2" v-if="!authenticated">
+          <a href="/auth/google">Google Login</a>
+        </button>
       </div>
     </div>
 
@@ -86,10 +66,6 @@ import querystring from "querystring";
 import SHA1 from "crypto-js/sha1";
 import escapeHTML from "escape-html";
 
-var httpClient = axios.create({
-  headers: { "x-api-key": localStorage.getItem("apiKey") }
-});
-
 const nowDatetime = new Date();
 const utcDatetime = new Date(
   nowDatetime.getUTCFullYear(),
@@ -103,21 +79,29 @@ const utcDatetime = new Date(
 const appData = {
   query: "",
   queryTerms: [],
-  searchStatus: null,
   queryID: null,
-  apiKey: localStorage.getItem("apiKey"),
-  showApiKeyForm: localStorage.getItem("apiKey") === null,
   metadata: {},
   timeSpan: 3600,
   timeBegin: strftime("%Y-%m-%dT%H:%M", utcDatetime),
   timeEnd: strftime("%Y-%m-%dT%H:%M", utcDatetime),
   errorMessage: null,
-  spanMode: "relative"
+  spanMode: "relative",
+  authenticated: false
 };
 
 export default {
   data() {
     return appData;
+  },
+  mounted() {
+    axios
+      .get("/auth")
+      .then(resp => {
+        appData.authenticated = true;
+      })
+      .catch(err => {
+        console.log("auth NG", err);
+      });
   },
   methods: {
     saveApiKey: saveApiKey,
@@ -144,8 +128,13 @@ function showApiKey() {
   appData.showApiKeyForm = true;
 }
 
-function showError(errMsg) {
-  appData.errorMessage = errMsg;
+function showError(err) {
+  console.log(err);
+  if (err.response) {
+    console.log("error response: ", err.response);
+  }
+
+  appData.errorMessage = err;
 }
 
 function clearError() {
@@ -218,9 +207,9 @@ function submitQuery(ev) {
   console.log("body =>", body);
 
   const router = this.$router;
-  httpClient
+  axios
     .post(`/api/v1/search`, body)
-    .then(function(response) {
+    .then(response => {
       console.log(response);
       router.push("/search/" + response.data.query_id);
     })
