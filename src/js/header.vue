@@ -1,26 +1,19 @@
 <template>
-  <div>
-    <nav class="strix-header">
-      <div class="header-item clearfix">
-        <h1>
-          <a href="/">Strix</a>
-        </h1>
-      </div>
-    </nav>
-  </div>
+  <CHeader fixed light>
+    <CHeaderNav class="d-md-down-none mr-auto">
+      <CHeaderNavItem class="px-3">
+        <CHeaderNavLink to="/">Strix</CHeaderNavLink>
+      </CHeaderNavItem>
+    </CHeaderNav>
+    <CHeaderNav class="mr-4">
+      <CHeaderNavItem class="d-md-down-none mx-2">
+        <CHeaderNavLink>Login</CHeaderNavLink>
+      </CHeaderNavItem>
+    </CHeaderNav>
+  </CHeader>
 </template>
 
 <script>
-const appData = {
-  query: ""
-};
-
-export default {
-  data() {
-    return appData;
-  },
-  methods: {}
-};
 </script>
 <style>
 </style>

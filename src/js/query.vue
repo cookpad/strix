@@ -1,62 +1,84 @@
 <template>
-  <div style="strix-main">
-    <div class="row">
-      <input
-        type="text"
-        autofocus
-        autocomplete="off"
-        placeholder="show your query"
-        v-model="query"
-        @keyup.enter="submitQuery"
-      />
-    </div>
-    <div class="row">
-      <div class="columns">
-        <select v-model="spanMode">
-          <option value="relative" selected>Last</option>
-          <option value="absolute">Between</option>
-        </select>
-      </div>
+  <CContainer fluid>
+    <CRow>
+      <CCol md="12">
+        <CCard>
+          <CCardBody>
+            <CRow>
+              <CCol sm="12">
+                <CInput
+                  type="text"
+                  autofocus
+                  autocomplete="off"
+                  placeholder="show your query"
+                  v-model="query"
+                  @keyup.enter="submitQuery"
+                />
+              </CCol>
+            </CRow>
+            <CRow>
+              <CCol sm="1">
+                <CSelect
+                  v-model="spanMode"
+                  :options="[
+                { value: 'relative', label: 'Last' },
+                { value: 'absolute', label: 'Between' }
+                ]"
+                />
+              </CCol>
 
-      <div class="columns" v-if="spanMode == 'relative'">
-        <select v-model="timeSpan" class="timespan">
-          <option value="3600" selected>1 hour</option>
-          <option value="7200">2 hours</option>
-          <option value="14400">4 hours</option>
-          <option value="28800">8 hours</option>
-          <option value="86400">1 day</option>
-          <option value="172800">2 day</option>
-          <option value="345600">4 day</option>
-          <option value="604800">1 week</option>
-          <option value="1209600">2 week</option>
-          <option value="2419200">4 week</option>
-        </select>
-      </div>
+              <CCol sm="2" v-if="spanMode === 'relative'">
+                <CSelect
+                  v-model="timeSpan"
+                  :options="[
+                  { value: '3600', label: '1 hour' },
+                  { value: '7200', label: '2 hours' },
+                  { value: '14400', label: '4 hours' },
+                  { value: '28800', label: '8 hours' },
+                  { value: '86400', label: '1 day' },
+                  { value: '172800', label: '2 day' },
+                  { value: '345600', label: '4 day' },
+                  { value: '604800', label: '1 week' },
+                  { value: '1209600', label: '2 week' },
+                  { value: '2419200', label: '4 week' },
+                ]"
+                />
+              </CCol>
 
-      <div class="columns" v-if="spanMode === 'absolute'">
-        <input type="datetime-local" v-model="timeBegin" />
-        To
-        <input type="datetime-local" v-model="timeEnd" />
-      </div>
-      <div class="columns">
-        <button class="send_query thin2" v-on:click="submitQuery">Query</button>
-      </div>
-      <div class="columns">
-        <button class="secondary thin2" v-if="!authenticated">
-          <a href="/auth/google">Google Login</a>
-        </button>
-      </div>
-    </div>
+              <CCol v-if="spanMode === 'absolute'">
+                <input type="datetime-local" v-model="timeBegin" />
+                To
+                <input type="datetime-local" v-model="timeEnd" />
+              </CCol>
 
-    <div class="row" v-if="errorMessage !== null">
-      <div class="columns">
-        <div class="msgbox alert">[Error] {{ errorMessage }}</div>
-      </div>
-      <div class="columns">
-        <button class="alert-dark thin2" v-on:click="clearError()">Dismiss</button>
-      </div>
-    </div>
-  </div>
+              <CCol>
+                <CButton
+                  v-on:click="submitQuery"
+                  class="m-2"
+                  :key="'primary'"
+                  :color="'primary'"
+                >Query</CButton>
+
+                <div class="columns">
+                  <button class="secondary thin2" v-if="!authenticated">
+                    <a href="/auth/google">Google Login</a>
+                  </button>
+                </div>
+              </CCol>
+            </CRow>
+            <div class="row" v-if="errorMessage !== null">
+              <div class="columns">
+                <div class="msgbox alert">[Error] {{ errorMessage }}</div>
+              </div>
+              <div class="columns">
+                <button class="alert-dark thin2" v-on:click="clearError()">Dismiss</button>
+              </div>
+            </div>
+          </CCardBody>
+        </CCard>
+      </CCol>
+    </CRow>
+  </CContainer>
 </template>
 
 <script>
@@ -170,7 +192,7 @@ function submitQuery(ev) {
 
   const span = extractSpan();
 
-  terms = appData.query.split(/\s+/).map(x => {
+  const terms = appData.query.split(/\s+/).map(x => {
     return { term: x };
   });
 

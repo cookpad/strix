@@ -1,114 +1,130 @@
 <template>
-  <!-- Log view --->
-  <div>
-    <div class="row" v-if="errorMessage !== null">
-      <div class="columns">
-        <div class="msgbox alert">[Error] {{ errorMessage }}</div>
-      </div>
-      <div class="columns">
-        <button class="alert-dark thin2" v-on:click="clearError()">Dismiss</button>
-      </div>
-    </div>
+  <CContainer fluid>
+    <CRow v-if="errorMessage !== null">
+      <CCol md="12">
+        <CCard>
+          <CCardBody>
+            <!-- Log view --->
 
-    <div class="row">
-      <div class="columns metadata-view">
-        <div class="metadata">
-          <h3 class="metadata">Results</h3>
-          <div v-if="metadata !== null">
-            <div class="content">Elapsed time: {{ metadata.elapsed_seconds }} seconds</div>
-            <div class="content">Total: {{ metadata.total }} logs</div>
-            <div class="content">SubTotal: {{ metadata.sub_total }} logs</div>
-            <div class="content">
-              <div>Tags:</div>
-              <div v-for="(tag, i) in metadata.tags" class="tag-selector">
-                <input type="checkbox" v-model="tags[tag]" v-on:change="changeSearchResultTags" />
-                {{ tag }}
+            <div class="columns">
+              <div class="msgbox alert">[Error] {{ errorMessage }}</div>
+            </div>
+            <div class="columns">
+              <button class="alert-dark thin2" v-on:click="clearError()">Dismiss</button>
+            </div>
+          </CCardBody>
+        </CCard>
+      </CCol>
+    </CRow>
+
+    <CRow>
+      <CCol md="2">
+        <CCard>
+          <CCardBody>
+            <h3 class="metadata">Results</h3>
+            <div v-if="metadata !== null">
+              <div class="content">Elapsed time: {{ metadata.elapsed_seconds }} seconds</div>
+              <div class="content">Total: {{ metadata.total }} logs</div>
+              <div class="content">SubTotal: {{ metadata.sub_total }} logs</div>
+              <div class="content">
+                <div>Tags:</div>
+                <div v-for="(tag, i) in metadata.tags" class="tag-selector">
+                  <input type="checkbox" v-model="tags[tag]" v-on:change="changeSearchResultTags" />
+                  {{ tag }}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </CCardBody>
+        </CCard>
+      </CCol>
 
       <!-- TODO: add "columns" class.
     Originally the <div> also should have "column", but layout will be broken if value is too long.
       I'm not good CSS writer for now-->
-      <div class="log-view">
-        <div class="subrow">
-          <input
-            type="text"
-            class="filter-query"
-            autofocus
-            autocomplete="off"
-            placeholder="filter (write jq grammer)"
-            v-model="query"
-            @keyup.enter="renewJqQuery"
-          />
-        </div>
+      <CCol>
+        <CCard>
+          <CCardHeader>
+            <CInput
+              type="text"
+              class="filter-query"
+              autofocus
+              autocomplete="off"
+              placeholder="filter (write jq grammer)"
+              v-model="query"
+              @keyup.enter="renewJqQuery"
+            />
 
-        <div class="subrow msgbox sysmsg" v-if="systemMessage !== null">{{ systemMessage }}</div>
+            <div class="subrow msgbox sysmsg" v-if="systemMessage !== null">{{ systemMessage }}</div>
+          </CCardHeader>
 
-        <!-- Pagenation (header) -->
-        <div class="subrow" v-if="pages.length > 0">
-          <ul class="pagination">
-            <li v-for="p in pages" v-bind:class="{current: p.current}">
-              <a
-                class="offset"
-                href="javascript: void(0)"
-                v-on:click="changeSearchResultOffset(p.offset, p.current)"
-              >{{ p.label }}</a>
-            </li>
-          </ul>
-        </div>
+          <CCardBody>
+            <!-- Pagenation (header) -->
+            <div class="subrow" v-if="pages.length > 0">
+              <ul class="pagination">
+                <li v-for="p in pages" v-bind:class="{current: p.current}">
+                  <a
+                    class="offset"
+                    href="javascript: void(0)"
+                    v-on:click="changeSearchResultOffset(p.offset, p.current)"
+                  >{{ p.label }}</a>
+                </li>
+              </ul>
+            </div>
+            <!-- Log view -->
+            <div class="subrow" v-if="logs.length > 0">
+              <table class="log-view">
+                <thead>
+                  <tr>
+                    <td>Meta</td>
+                    <td>Log</td>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="log in logs">
+                    <td class="log-meta-data">
+                      <div class="content">
+                        <div>
+                          <strong>{{ log.datetime }}</strong>
+                        </div>
+                        <div>
+                          <span class="label" v-bind:style="log.labelStyle">{{ log.tag }}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <table class="log-data-view">
+                        <tbody>
+                          <tr v-for="d in log.data">
+                            <td class="log-field">{{ d.k }}</td>
+                            <td class="log-value">
+                              <div class="log-value" v-html="d.v"></div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
 
-        <!-- Log view -->
-        <div class="subrow" v-if="logs.length > 0">
-          <table class="log-view">
-            <thead>
-              <tr>
-                <td>Meta</td>
-                <td>Log</td>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="log in logs">
-                <td class="log-meta-data">
-                  <div class="content">
-                    <strong>{{ log.datetime }}</strong>
-                    <span class="label" v-bind:style="log.labelStyle">{{ log.tag }}</span>
-                  </div>
-                </td>
-                <td>
-                  <table class="log-data-view">
-                    <tbody>
-                      <tr v-for="d in log.data">
-                        <td class="log-field">{{ d.k }}</td>
-                        <td class="log-value">
-                          <div class="log-value" v-html="d.v"></div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagenation (footer) -->
-        <div class="subrow" v-if="pages.length > 0">
-          <ul class="pagination">
-            <li v-for="p in pages" v-bind:class="{current: p.current}">
-              <a
-                class="offset"
-                href="javascript: void(0)"
-                v-on:click="changeSearchResultOffset(p.offset)"
-              >{{ p.label }}</a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
+            <!-- Pagenation (footer) -->
+            <div class="subrow" v-if="pages.length > 0">
+              <ul class="pagination">
+                <li v-for="p in pages" v-bind:class="{current: p.current}">
+                  <a
+                    class="offset"
+                    href="javascript: void(0)"
+                    v-on:click="changeSearchResultOffset(p.offset)"
+                  >{{ p.label }}</a>
+                </li>
+              </ul>
+            </div>
+          </CCardBody>
+        </CCard>
+      </CCol>
+    </CRow>
+  </CContainer>
 </template>
 <script>
 import axios from "axios";
