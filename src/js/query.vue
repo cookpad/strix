@@ -11,15 +11,15 @@
                   autofocus
                   autocomplete="off"
                   placeholder="show your query"
-                  v-model="query"
-                  @keyup.enter="submitQuery"
+                  v-on:update:value="query = $event"
+                  v-on:keyup.native.enter="submitQuery"
                 />
               </CCol>
             </CRow>
             <CRow>
-              <CCol sm="1">
+              <CCol sm="2">
                 <CSelect
-                  v-model="spanMode"
+                  v-on:update:value="spanMode = $event"
                   :options="[
                 { value: 'relative', label: 'Last' },
                 { value: 'absolute', label: 'Between' }
@@ -29,7 +29,7 @@
 
               <CCol sm="2" v-if="spanMode === 'relative'">
                 <CSelect
-                  v-model="timeSpan"
+                  v-on:update:value="timeSpan = $event"
                   :options="[
                   { value: '3600', label: '1 hour' },
                   { value: '7200', label: '2 hours' },

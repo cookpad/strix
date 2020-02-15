@@ -46,14 +46,11 @@
           <CCardHeader>
             <CInput
               type="text"
-              class="filter-query"
-              autofocus
               autocomplete="off"
-              placeholder="filter (write jq grammer)"
-              v-model="query"
-              @keyup.enter="renewJqQuery"
+              placeholder="jq filter"
+              v-on:update:value="query = $event"
+              v-on:keyup.native.enter="renewJqQuery"
             />
-
             <div class="subrow msgbox sysmsg" v-if="systemMessage !== null">{{ systemMessage }}</div>
           </CCardHeader>
 
@@ -169,7 +166,10 @@ export default {
     changeSearchResultTags: changeSearchResultTags,
     showSearch: showSearch,
     renewJqQuery: renewJqQuery,
-    clearError: clearError
+    clearError: clearError,
+    print: function(ev) {
+      console.log(ev);
+    }
   },
   mounted() {
     this.showSearch();
