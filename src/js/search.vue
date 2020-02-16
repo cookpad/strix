@@ -4,8 +4,6 @@
       <CCol md="12">
         <CCard>
           <CCardBody>
-            <!-- Log view --->
-
             <div class="columns">
               <div class="msgbox alert">[Error] {{ errorMessage }}</div>
             </div>
@@ -17,7 +15,20 @@
       </CCol>
     </CRow>
 
-    <CRow>
+    <CRow v-if="progressMessage !== null">
+      <CCol md="12">
+        <CCard>
+          <CCardBody>
+            <CAlert color="primary">
+              <CSpinner grow size="sm" />
+              {{ progressMessage }}
+            </CAlert>
+          </CCardBody>
+        </CCard>
+      </CCol>
+    </CRow>
+
+    <CRow v-if="metadata !== null">
       <CCol md="2">
         <CCard>
           <CCardBody>
@@ -152,6 +163,7 @@ const appData = {
   metadata: null,
   errorMessage: null,
   systemMessage: null,
+  progressMessage: null,
 
   // lastQueryString will be set this.$route.query
   lastQueryString: null,
@@ -417,13 +429,13 @@ function getSearchResult(search_id, qs) {
     .then(function(response) {
       switch (response.data.metadata.status) {
         case "SUCCEEDED":
-          appData.systemMessage = null;
+          appData.progressMessage = null;
           renderResult(response.data);
           break;
 
         case "RUNNING":
           const now = new Date();
-          appData.systemMessage =
+          appData.progressMessage =
             "Elapsed time: " +
             Math.floor(response.data.metadata.elapsed_seconds * 100) / 100 +
             " seconds";
@@ -449,6 +461,7 @@ function showSearch() {
   appData.search_id = this.$route.params.search_id;
   appData.query = this.$route.query.query;
   appData.lastQueryString = Object.assign({}, this.$route.query);
+  appData.metadata = null;
   getSearchResult(this.$route.params.search_id, this.$route.query);
 }
 </script>
