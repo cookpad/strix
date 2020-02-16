@@ -171,7 +171,7 @@ func setupAuth(mgr *sessionManager, r *gin.RouterGroup) error {
 
 	r.GET("/logout", func(c *gin.Context) {
 		mgr.logout(c)
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		c.Redirect(http.StatusFound, "/")
 	})
 
 	return nil
@@ -211,7 +211,7 @@ func setupAuthGoogle(mgr *sessionManager, conf *oauth2.Config, r *gin.RouterGrou
 		url := conf.AuthCodeURL("state", oauth2.AccessTypeOnline)
 		// fmt.Printf("Visit the URL for the auth dialog: %v", url)
 
-		c.Redirect(302, url)
+		c.Redirect(http.StatusFound, url)
 	})
 
 	// Callback from Google
@@ -283,7 +283,7 @@ func setupAuthGoogle(mgr *sessionManager, conf *oauth2.Config, r *gin.RouterGrou
 			c.String(http.StatusInternalServerError, "Authentication procedure failed")
 		}
 
-		c.Redirect(302, "/")
+		c.Redirect(http.StatusFound, "/")
 	})
 
 	return nil
