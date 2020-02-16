@@ -58,12 +58,6 @@
                   :key="'primary'"
                   :color="'primary'"
                 >Query</CButton>
-
-                <div class="columns">
-                  <button class="secondary thin2" v-if="!authenticated">
-                    <a href="/auth/google">Google Login</a>
-                  </button>
-                </div>
               </CCol>
             </CRow>
             <div class="row" v-if="errorMessage !== null">
@@ -101,23 +95,12 @@ const appData = {
   timeBegin: strftime("%Y-%m-%dT%H:%M", utcDatetime),
   timeEnd: strftime("%Y-%m-%dT%H:%M", utcDatetime),
   errorMessage: null,
-  spanMode: "relative",
-  authenticated: false
+  spanMode: "relative"
 };
 
 export default {
   data() {
     return appData;
-  },
-  mounted() {
-    axios
-      .get("/auth")
-      .then(resp => {
-        appData.authenticated = true;
-      })
-      .catch(err => {
-        console.log("auth NG", err);
-      });
   },
   methods: {
     clearError: clearError,
@@ -176,11 +159,6 @@ function extractSpan() {
 
 function submitQuery(ev) {
   clearError();
-
-  if (appData.apiKey === "") {
-    showError("API key required");
-    return;
-  }
 
   if (appData.query === "") {
     showError("No query");

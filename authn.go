@@ -17,9 +17,15 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
+const (
+	cookieKey     = "jwt"
+	tokenDuration = time.Hour * 24
+)
+
 type strixUser struct {
-	UserID    string
-	Timestamp time.Time
+	UserID    string    `json:"user"`
+	Image     string    `json:"image"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 type sessionManager struct {
@@ -43,15 +49,16 @@ func (x *sessionManager) sign(user strixUser, c *gin.Context) error {
 	ssn := sessions.Default(c)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"user":      user.UserID,
-		"timestamp": user.Timestamp,
+		"user":       user.UserID,
+		"expires_at": user.ExpiresAt,
+		"image":      user.Image,
 	})
 	signed, err := token.SignedString(x.jwtSecret)
 	if err != nil {
 		return errors.Wrapf(err, "Fail to sign JWT token: %v", token)
 	}
 
-	ssn.Set("jwt", signed)
+	ssn.Set(cookieKey, signed)
 	if err := ssn.Save(); err != nil {
 		logger.WithError(err).Errorf("Fail to save cookie")
 		return errors.Wrap(err, "Fail to save cookie")
@@ -60,9 +67,45 @@ func (x *sessionManager) sign(user strixUser, c *gin.Context) error {
 	return nil
 }
 
+func claimToStrixUser(claims jwt.MapClaims) (*strixUser, error) {
+	var user strixUser
+
+	if v, ok := claims["user"].(string); ok {
+		user.UserID = v
+	} else {
+		return nil, fmt.Errorf("Missing 'user' field in token")
+	}
+
+	if v, ok := claims["image"].(string); ok {
+		user.Image = v
+	} else {
+		return nil, fmt.Errorf("Missing 'image' field in token")
+	}
+
+	if v, ok := claims["expires_at"].(string); ok {
+		if expires, err := time.Parse("2006-01-02T15:04:05.999999Z07:00", v); err == nil {
+			user.ExpiresAt = expires
+		} else {
+			return nil, errors.Wrapf(err, "Fail to parse 'expires_at' field properly: %s", v)
+		}
+	} else {
+		return nil, fmt.Errorf("Missing 'expires_at' field in token")
+	}
+
+	return &user, nil
+}
+
+func (x *sessionManager) logout(c *gin.Context) {
+	ssn := sessions.Default(c)
+	ssn.Delete(cookieKey)
+	if err := ssn.Save(); err != nil {
+		logger.WithError(err).Errorf("Fail to delete cookie, but nothing to do")
+	}
+}
+
 func (x *sessionManager) validate(c *gin.Context) (*strixUser, error) {
 	ssn := sessions.Default(c)
-	cookie := ssn.Get("jwt")
+	cookie := ssn.Get(cookieKey)
 	if cookie == nil {
 		return nil, fmt.Errorf("No cookie")
 	}
@@ -72,7 +115,7 @@ func (x *sessionManager) validate(c *gin.Context) (*strixUser, error) {
 		return nil, fmt.Errorf("Invalid cookie data format: %v", cookie)
 	}
 
-	logger.WithField("jwt", raw).Info("Validating JWT token")
+	logger.WithField(cookieKey, raw).Info("Validating JWT token")
 
 	token, err := jwt.Parse(raw, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
@@ -90,12 +133,16 @@ func (x *sessionManager) validate(c *gin.Context) (*strixUser, error) {
 			return nil, errors.Wrapf(err, "Fail to get claims from Token: %v", claims)
 		}
 
-		logger.WithField("ts", claims["timestamp"].(string)).Info("timestamp")
+		user, err := claimToStrixUser(claims)
+		if err != nil {
+			return nil, err
+		}
 
-		// Authentication success
-		return &strixUser{
-			UserID: claims["user"].(string),
-		}, nil
+		if time.Now().After(user.ExpiresAt) {
+			return nil, fmt.Errorf("Token is already expired: %s", user.ExpiresAt)
+		}
+
+		return user, nil
 	} else if ve, ok := err.(*jwt.ValidationError); ok {
 		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
 			return nil, fmt.Errorf("That's not even a token")
@@ -115,10 +162,16 @@ func setupAuth(mgr *sessionManager, r *gin.RouterGroup) error {
 		logger.WithField("user", user).Info("Auth")
 
 		if err != nil {
+			logger.WithError(err).Info("Authentication fail")
 			c.JSON(http.StatusUnauthorized, gin.H{"msg": "Not authenticated"})
 		} else {
-			c.JSON(http.StatusOK, gin.H{"msg": "Authenticated"})
+			c.JSON(http.StatusOK, gin.H{"msg": "Authenticated", "user": user})
 		}
+	})
+
+	r.GET("/logout", func(c *gin.Context) {
+		mgr.logout(c)
+		c.Redirect(http.StatusTemporaryRedirect, "/")
 	})
 
 	return nil
@@ -195,13 +248,14 @@ func setupAuthGoogle(mgr *sessionManager, conf *oauth2.Config, r *gin.RouterGrou
 
 		var googleUser struct {
 			Sub           string `json:"sub"`
-			Picture       string `json:""`
+			Picture       string `json:"picture"`
 			Email         string `json:"email"`
 			EmailVerified bool   `json:"email_verified"`
 			HD            string `json:"hd"`
 		}
 
 		raw, err := ioutil.ReadAll(resp.Body)
+		logger.WithField("user", string(raw)).Info("userinfo")
 		if err != nil {
 			logger.WithError(err).Errorf("Fail to read user info from Google")
 			c.String(http.StatusInternalServerError, "Fail to authentication, see system logs")
@@ -222,7 +276,8 @@ func setupAuthGoogle(mgr *sessionManager, conf *oauth2.Config, r *gin.RouterGrou
 
 		user := strixUser{
 			UserID:    googleUser.Email,
-			Timestamp: time.Now(),
+			Image:     googleUser.Picture,
+			ExpiresAt: time.Now().Add(tokenDuration),
 		}
 		if err := mgr.sign(user, c); err != nil {
 			c.String(http.StatusInternalServerError, "Authentication procedure failed")
