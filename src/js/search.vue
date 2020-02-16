@@ -50,6 +50,7 @@
               placeholder="jq filter"
               v-on:update:value="query = $event"
               v-on:keyup.native.enter="renewJqQuery"
+              v-bind:value="query"
             />
             <div class="subrow msgbox sysmsg" v-if="systemMessage !== null">{{ systemMessage }}</div>
           </CCardHeader>
@@ -166,10 +167,7 @@ export default {
     changeSearchResultTags: changeSearchResultTags,
     showSearch: showSearch,
     renewJqQuery: renewJqQuery,
-    clearError: clearError,
-    print: function(ev) {
-      console.log(ev);
-    }
+    clearError: clearError
   },
   mounted() {
     this.showSearch();
@@ -378,7 +376,11 @@ function renewSearchResult(router, newQuery) {
 }
 
 function renewJqQuery() {
-  renewSearchResult(this.$router, { query: appData.query });
+  if (appData.query === "") {
+    renewSearchResult(this.$router, { query: null });
+  } else {
+    renewSearchResult(this.$router, { query: appData.query });
+  }
 }
 
 function changeSearchResultOffset(offset, current) {
