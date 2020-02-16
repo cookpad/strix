@@ -73,25 +73,27 @@ func main() {
 			Destination: &args.GoogleOAuthConfig,
 		},
 		cli.StringFlag{
+			Name:        "google-oauth-config-data, d",
+			Usage:       "Google OAuth JSON config encoded as base64",
+			EnvVar:      "GOOGLE_OAUTH",
+			Destination: &args.GoogleOAuthConfigData,
+		},
+		cli.StringFlag{
 			Name:        "jwt-secret, j",
 			Usage:       "JWT secret to sign and validate token",
+			EnvVar:      "JWT_SECRET",
 			Destination: &args.JWTSecret,
 		},
 		cli.StringFlag{
 			Name:        "api-key, k",
 			Usage:       "API Key of Minerva",
+			EnvVar:      "API_KEY",
 			Destination: &args.APIKey,
 		},
-
 		cli.StringFlag{
 			Name:        "authz-path, z",
 			Usage:       "Authorization list json file path",
 			Destination: &args.AuthzFilePath,
-		},
-		cli.StringFlag{
-			Name:        "secret-arn",
-			Usage:       "Secret ARN of SecretsManager",
-			Destination: &args.SecretArn,
 		},
 	}
 	app.ArgsUsage = "[endpoint]"

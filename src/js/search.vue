@@ -186,7 +186,6 @@ export default {
   },
   watch: {
     $route(to, from) {
-      console.log(from, " => ", to);
       if (to.matched[0].path === "/search/:search_id") {
         this.showSearch();
       }
@@ -256,7 +255,6 @@ function buildPagenationIndices(metadata) {
   let currentPage;
 
   for (var i = 0; i * step < metadata.sub_total; i++) {
-    console.log("c =>", metadata.offset, i, step);
     const current = metadata.offset === i * step;
     const p = {
       label: i + 1,
@@ -404,8 +402,6 @@ function changeSearchResultOffset(offset, current) {
 }
 
 function changeSearchResultTags(args) {
-  console.log(appData.tags);
-
   if (Object.keys(appData.tags).every(v => appData.tags[v])) {
     renewSearchResult(this.$router, { tags: null });
   } else {

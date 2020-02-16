@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -123,26 +124,35 @@ func setupAuth(mgr *sessionManager, r *gin.RouterGroup) error {
 	return nil
 }
 
-func loadAuthGoogleConfig(configPath string) (*oauth2.Config, error) {
+func setupAuthGoogleConfigFile(mgr *sessionManager, configPath string, r *gin.RouterGroup) error {
 	raw, err := ioutil.ReadFile(configPath)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	conf, err := google.ConfigFromJSON(raw, "https://www.googleapis.com/auth/userinfo.email")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return conf, nil
+	return setupAuthGoogle(mgr, conf, r)
 }
 
-func setupAuthGoogle(mgr *sessionManager, clientConfig string, r *gin.RouterGroup) error {
-	conf, err := loadAuthGoogleConfig(clientConfig)
+func setupAuthGoogleBase64(mgr *sessionManager, configData string, r *gin.RouterGroup) error {
+	raw, err := base64.StdEncoding.DecodeString(configData)
 	if err != nil {
-		return errors.Wrapf(err, "Fail to load Google OAuth client config: %s", clientConfig)
+		return errors.Wrapf(err, "Fail to decode Google OAuth data: %s", configData)
 	}
 
+	conf, err := google.ConfigFromJSON(raw, "https://www.googleapis.com/auth/userinfo.email")
+	if err != nil {
+		return errors.Wrap(err, "Fail to load JSON config")
+	}
+
+	return setupAuthGoogle(mgr, conf, r)
+}
+
+func setupAuthGoogle(mgr *sessionManager, conf *oauth2.Config, r *gin.RouterGroup) error {
 	// Redirect to Google
 	r.GET("/google", func(c *gin.Context) {
 		url := conf.AuthCodeURL("state", oauth2.AccessTypeOnline)

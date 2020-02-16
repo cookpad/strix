@@ -19,11 +19,11 @@ type arguments struct {
 	StaticContents string
 	HelloReply     string
 	APIKey         string
-	SecretArn      string
 	AuthzFilePath  string
 
 	// Google OAuth options
-	GoogleOAuthConfig string
+	GoogleOAuthConfig     string
+	GoogleOAuthConfigData string
 
 	// JWT
 	JWTSecret string
@@ -71,7 +71,12 @@ func runServer(args arguments) error {
 		return err
 	}
 	if args.GoogleOAuthConfig != "" {
-		if err := setupAuthGoogle(ssnMgr, args.GoogleOAuthConfig, authGroup); err != nil {
+		if err := setupAuthGoogleConfigFile(ssnMgr, args.GoogleOAuthConfig, authGroup); err != nil {
+			return err
+		}
+	}
+	if args.GoogleOAuthConfigData != "" {
+		if err := setupAuthGoogleBase64(ssnMgr, args.GoogleOAuthConfigData, authGroup); err != nil {
 			return err
 		}
 	}
