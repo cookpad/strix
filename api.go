@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 type roundTripper func(*http.Request) (*http.Response, error)
@@ -15,7 +16,12 @@ type roundTripper func(*http.Request) (*http.Response, error)
 func (f roundTripper) RoundTrip(req *http.Request) (*http.Response, error) { return f(req) }
 
 func reverseProxy(authz *authzService, apiKey, target string) (gin.HandlerFunc, error) {
-	logger.WithField("target", target).Info("proxy")
+	logger.WithFields(logrus.Fields{
+		"target": target,
+		"apikey": apiKey[:4] + "...",
+		"authz":  authz,
+	}).Info("build proxy")
+
 	url, err := url.Parse(target)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Fail to parse endpoint URL: %v", target)
