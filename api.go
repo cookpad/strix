@@ -58,7 +58,7 @@ func reverseProxy(authz *authzService, apiKey, target string) (gin.HandlerFunc, 
 				req.URL.Scheme = url.Scheme
 				req.URL.Path = url.Path + req.URL.Path
 				req.Header.Set("x-api-key", apiKey)
-				req.Header.Set("minerva-allowed-tags", tags)
+				req.Header.Set("x-readable-tag", tags)
 			},
 		}).ServeHTTP(c.Writer, c.Request)
 
@@ -72,6 +72,7 @@ func setupAPI(authz *authzService, apiKey, endpoint string, r *gin.RouterGroup) 
 	}
 
 	r.POST("/search", proxy)
+	r.GET("/search/:search_id", proxy)
 	r.GET("/search/:search_id/logs", proxy)
 	r.GET("/search/:search_id/timeseries", proxy)
 
