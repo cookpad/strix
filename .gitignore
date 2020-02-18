@@ -3,3 +3,4 @@ static/js/bundle.js
 strix
 /*.json
 /*.sh
+.DS_Store

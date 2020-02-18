@@ -7,7 +7,10 @@
     </CHeaderNav>
     <CHeaderNav class="mr-4">
       <CHeaderNavItem class="d-md-down-none mx-2" v-if="user === null">
-        <a href="/auth/google">Login</a>
+        <CButton color="primary" class="m-2" v-on:click="moveToLoginPage">
+          <!--    <a href="/auth/google">Login</a>-->
+          Login
+        </CButton>
       </CHeaderNavItem>
 
       <CDropdown
@@ -24,9 +27,8 @@
             </div>
           </CHeaderNavLink>
         </template>
-        <CDropdownHeader tag="div" class="text-center" color="light">
-          <strong>{{ user.user }}</strong>
-        </CDropdownHeader>
+        <strong>{{ user.user }}</strong>
+        <CDropdownHeader tag="div" class="text-center" color="light"></CDropdownHeader>
         <CDropdownItem href="/auth/logout">Logout</CDropdownItem>
       </CDropdown>
     </CHeaderNav>
@@ -43,6 +45,11 @@ const appData = {
 export default {
   data() {
     return appData;
+  },
+  methods: {
+    moveToLoginPage: function() {
+      window.location = "/auth/google";
+    }
   },
   mounted() {
     axios
