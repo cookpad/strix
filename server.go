@@ -48,7 +48,7 @@ func runServer(args arguments) error {
 	})
 
 	// Setup session manager
-	authz, err := newAuthzService(args.AuthzFilePath)
+	authz, err := newAuthzServiceFromFile(args.AuthzFilePath)
 	if err != nil {
 		return err
 	}

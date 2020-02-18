@@ -39,14 +39,14 @@ func reverseProxy(authz *authzService, apiKey, target string) (gin.HandlerFunc, 
 			return
 		}
 
-		user := userData.(string)
-		allowed, ok := authz.AllowTable[user]
-		if !ok {
+		userID := userData.(string)
+		user := authz.lookup(userID)
+		if user == nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"msg": "Unauthorized user", "user": user})
 			return
 		}
 
-		tags := strings.Join(allowed, ",")
+		tags := strings.Join(user.allowed(), ",")
 		if tags == "" {
 			tags = "*"
 		}
