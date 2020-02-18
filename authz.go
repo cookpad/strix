@@ -15,13 +15,13 @@ type authzUser struct {
 	rolePtr *authzRole
 }
 
-func (x *authzUser) allowed() []string {
-	return x.rolePtr.AllowedTags
+func (x *authzUser) permitted() []string {
+	return x.rolePtr.PermittedTags
 }
 
 type authzRole struct {
-	Name        string   `json:"name"`
-	AllowedTags []string `json:"allowed_tags"`
+	Name          string   `json:"name"`
+	PermittedTags []string `json:"permitted_tags"`
 }
 
 type authzRule struct {

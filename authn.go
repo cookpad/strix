@@ -115,15 +115,12 @@ func (x *sessionManager) validate(c *gin.Context) (*strixUser, error) {
 		return nil, fmt.Errorf("Invalid cookie data format: %v", cookie)
 	}
 
-	logger.WithField(cookieKey, raw).Info("Validating JWT token")
-
 	token, err := jwt.Parse(raw, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
 
-		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return x.jwtSecret, nil
 	})
 

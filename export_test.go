@@ -9,5 +9,5 @@ func AuthzServiceLookup(x *authzService, userID string) *AuthzUser {
 }
 func AuthzUserAllowed(x *AuthzUser) []string {
 	authz := (*authzUser)(x)
-	return authz.rolePtr.AllowedTags
+	return authz.rolePtr.PermittedTags
 }

@@ -7,6 +7,7 @@ require (
 	github.com/gin-contrib/sessions v0.0.3
 	github.com/gin-contrib/static v0.0.0-20190913125243-df30d4057ba1
 	github.com/gin-gonic/gin v1.5.0
+	github.com/google/uuid v1.1.1
 	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/k0kubun/pp v3.0.1+incompatible
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect

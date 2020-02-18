@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -46,10 +47,20 @@ func reverseProxy(authz *authzService, apiKey, target string) (gin.HandlerFunc, 
 			return
 		}
 
-		tags := strings.Join(user.allowed(), ",")
-		if tags == "" {
-			tags = "*"
+		permittedTags := strings.Join(user.permitted(), ",")
+		if permittedTags == "" {
+			permittedTags = "*"
 		}
+
+		reqID := uuid.New().String()
+		logger.WithFields(logrus.Fields{
+			"user":          user.UserID,
+			"permittedTags": permittedTags,
+			"path":          c.FullPath(),
+			"ipaddr":        c.ClientIP(),
+			"user_agent":    c.Request.UserAgent(),
+			"request_id":    reqID,
+		}).Info("Audit log")
 
 		(&httputil.ReverseProxy{
 			Transport: roundTripper(requestHandler),
@@ -58,7 +69,8 @@ func reverseProxy(authz *authzService, apiKey, target string) (gin.HandlerFunc, 
 				req.URL.Scheme = url.Scheme
 				req.URL.Path = url.Path + req.URL.Path
 				req.Header.Set("x-api-key", apiKey)
-				req.Header.Set("x-readable-tag", tags)
+				req.Header.Set("x-permitted-tags", permittedTags)
+				req.Header.Set("x-request-id", reqID)
 			},
 		}).ServeHTTP(c.Writer, c.Request)
 
