@@ -27,8 +27,10 @@
             </div>
           </CHeaderNavLink>
         </template>
-        <strong>{{ user.user }}</strong>
-        <CDropdownHeader tag="div" class="text-center" color="light"></CDropdownHeader>
+
+        <CDropdownHeader tag="div" class="text-center" color="light">
+          <strong>{{ user.user }}</strong>
+        </CDropdownHeader>
         <CDropdownItem href="/auth/logout">Logout</CDropdownItem>
       </CDropdown>
     </CHeaderNav>

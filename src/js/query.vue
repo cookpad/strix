@@ -1,6 +1,6 @@
 <template>
   <CContainer fluid>
-    <CRow>
+    <CRow v-if="auth">
       <CCol md="12">
         <CCard>
           <CCardBody>
@@ -95,7 +95,8 @@ const appData = {
   timeBegin: strftime("%Y-%m-%dT%H:%M", utcDatetime),
   timeEnd: strftime("%Y-%m-%dT%H:%M", utcDatetime),
   errorMessage: null,
-  spanMode: "relative"
+  spanMode: "relative",
+  auth: false
 };
 
 export default {
@@ -105,6 +106,14 @@ export default {
   methods: {
     clearError: clearError,
     submitQuery: submitQuery
+  },
+  mounted() {
+    axios
+      .get("/auth")
+      .then(resp => {
+        appData.auth = true;
+      })
+      .catch(err => {});
   }
 };
 
