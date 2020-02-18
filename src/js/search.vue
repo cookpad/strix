@@ -4,12 +4,7 @@
       <CCol md="12">
         <CCard>
           <CCardBody>
-            <div class="columns">
-              <div class="msgbox alert">[Error] {{ errorMessage }}</div>
-            </div>
-            <div class="columns">
-              <button class="alert-dark thin2" v-on:click="clearError()">Dismiss</button>
-            </div>
+            <CAlert color="danger" closeButton>{{ errorMessage }}</CAlert>
           </CCardBody>
         </CCard>
       </CCol>
@@ -28,7 +23,7 @@
       </CCol>
     </CRow>
 
-    <CRow v-if="metadata !== null">
+    <CRow>
       <CCol md="2">
         <CCard>
           <CCardBody>
@@ -66,7 +61,7 @@
             <div class="subrow msgbox sysmsg" v-if="systemMessage !== null">{{ systemMessage }}</div>
           </CCardHeader>
 
-          <CCardBody>
+          <CCardBody v-if="metadata !== null">
             <!-- Pagenation (header) -->
             <div class="subrow" v-if="pages.length > 0">
               <ul class="pagination">
