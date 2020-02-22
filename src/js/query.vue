@@ -195,7 +195,7 @@ function submitQuery(ev) {
     .post(`/api/v1/search`, body)
     .then(response => {
       console.log(response);
-      router.push("/search/" + response.data.query_id);
+      router.push("/search/" + response.data.search_id);
     })
     .catch(showError);
 }
