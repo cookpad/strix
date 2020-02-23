@@ -299,8 +299,8 @@ function buildPagenationIndices(metadata) {
 }
 
 function renderResult(data) {
-  appData.searchStatus = null;
   appData.metadata = data.metadata;
+  appData.searchStatus = null;
 
   if (data.logs === null || data.logs.length === 0) {
     appData.systemMessage = "No log found";
@@ -407,21 +407,40 @@ function changeSearchResultTags(args) {
   }
 }
 
-function getSearchResult(search_id, qs) {
+function getSearchLogs(searchID, qs) {
+  const url =
+    `/api/v1/search/${searchID}/logs` +
+    (Object.keys(qs).length > 0 ? "?" + querystring.stringify(qs) : "");
+
+  appData.progressMessage = null;
+  axios
+    .get(url)
+    .then(response => {
+      renderResult(response.data);
+    })
+    .catch(err => {
+      console.log("Error: ", err, err.request, err.response);
+      if (err.response && err.response.data.message) {
+        showError(err.response.data.message);
+      }
+    });
+}
+
+function getSearchResult(searchID, qs, n = 1) {
   clearError();
+  appData.logs = [];
+
   const now = new Date();
 
-  const url =
-    `/api/v1/search/${search_id}/logs` +
-    (Object.keys(qs).length > 0 ? "?" + querystring.stringify(qs) : "");
+  const url = `/api/v1/search/${searchID}`;
 
   axios
     .get(url)
     .then(function(response) {
       switch (response.data.metadata.status) {
         case "SUCCEEDED":
-          appData.progressMessage = null;
-          renderResult(response.data);
+          appData.metadata = response.data.metadata;
+          getSearchLogs(searchID, qs);
           break;
 
         case "RUNNING":
@@ -431,9 +450,10 @@ function getSearchResult(search_id, qs) {
             Math.floor(response.data.metadata.elapsed_seconds * 100) / 100 +
             " seconds";
 
+          const waitTime = ((n ^ 2) / 16 + 1) * 1000;
           setTimeout(function() {
-            getSearchResult(search_id, qs);
-          }, 1000);
+            getSearchResult(searchID, qs, n + 1);
+          }, waitTime);
           break;
 
         default:

@@ -12,6 +12,7 @@
                   autocomplete="off"
                   placeholder="show your query"
                   v-on:update:value="query = $event"
+                  v-bind:value="query"
                   v-on:keyup.native.enter="submitQuery"
                 />
               </CCol>
@@ -20,6 +21,7 @@
               <CCol sm="2">
                 <CSelect
                   v-on:update:value="spanMode = $event"
+                  v-bind:value="spanMode"
                   :options="[
                 { value: 'relative', label: 'Last' },
                 { value: 'absolute', label: 'Between' }
@@ -79,21 +81,26 @@
 import axios from "axios";
 import strftime from "strftime";
 
+function utcDateTime(unixtime) {
+  const base = new Date(unixtime * 1000);
+  const utc = new Date(
+    base.getUTCFullYear(),
+    base.getUTCMonth(),
+    base.getUTCDate(),
+    base.getUTCHours(),
+    base.getUTCMinutes(),
+    base.getUTCSeconds()
+  );
+  return strftime("%Y-%m-%dT%H:%M", utc);
+}
+
 const nowDatetime = new Date();
-const utcDatetime = new Date(
-  nowDatetime.getUTCFullYear(),
-  nowDatetime.getUTCMonth(),
-  nowDatetime.getUTCDate(),
-  nowDatetime.getUTCHours(),
-  nowDatetime.getUTCMinutes(),
-  nowDatetime.getUTCSeconds()
-);
 
 const appData = {
   query: "",
   timeSpan: 3600,
-  timeBegin: strftime("%Y-%m-%dT%H:%M", utcDatetime),
-  timeEnd: strftime("%Y-%m-%dT%H:%M", utcDatetime),
+  timeBegin: utcDateTime(nowDatetime.getTime() / 1000 - 3600),
+  timeEnd: utcDateTime(nowDatetime.getTime() / 1000),
   errorMessage: null,
   spanMode: "relative",
   auth: false
@@ -105,7 +112,8 @@ export default {
   },
   methods: {
     clearError: clearError,
-    submitQuery: submitQuery
+    submitQuery: submitQuery,
+    setParameters: setParameters
   },
   mounted() {
     axios
@@ -114,8 +122,36 @@ export default {
         appData.auth = true;
       })
       .catch(err => {});
+
+    this.setParameters();
+  },
+  watch: {
+    $route(to, from) {
+      if (to.matched[0].path === "/search/:search_id") {
+        this.setParameters();
+      }
+    }
   }
 };
+
+function setParameters() {
+  console.log(this.$route.params);
+  const searchID = this.$route.params.search_id;
+  console.log("ID =>", searchID);
+
+  const url = `/api/v1/search/${searchID}`;
+  axios
+    .get(url)
+    .then(response => {
+      console.log("response for param", response);
+      const meta = response.data.metadata;
+      appData.query = meta.query.map(q => q.term).join(" ");
+      appData.timeBegin = utcDateTime(meta.start_time);
+      appData.timeEnd = utcDateTime(meta.end_time);
+      appData.spanMode = "absolute";
+    })
+    .catch(showError);
+}
 
 function showError(err) {
   console.log(err);
