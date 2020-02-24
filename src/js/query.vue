@@ -137,6 +137,10 @@ export default {
 function setParameters() {
   console.log(this.$route.params);
   const searchID = this.$route.params.search_id;
+  if (searchID === undefined) {
+    return;
+  }
+
   console.log("ID =>", searchID);
 
   const url = `/api/v1/search/${searchID}`;
