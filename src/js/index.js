@@ -18,6 +18,9 @@ Vue.component('strix-search', Search);
 Vue.use(VueRouter);
 Vue.use(CoreuiVue);
 
+import { CChartBar } from '@coreui/vue-chartjs'
+Vue.component('CChartBar', CChartBar)
+
 const router = new VueRouter({
   routes: [
     {
