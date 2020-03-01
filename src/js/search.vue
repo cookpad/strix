@@ -48,6 +48,15 @@
     Originally the <div> also should have "column", but layout will be broken if value is too long.
       I'm not good CSS writer for now-->
       <CCol>
+        <CCard v-if="chartDataSets.length > 0">
+          <CChartBar
+            style="width:99%; height: 200px"
+            :datasets="chartDataSets"
+            :labels="chartLabels"
+            :options="chartOptions"
+          />
+        </CCard>
+
         <CCard>
           <CCardHeader>
             <CInput
@@ -160,10 +169,27 @@ const appData = {
   systemMessage: null,
   progressMessage: null,
 
+  chartLabels: ["January", "February", "March", "April", "May", "June", "July"],
+  chartOptions: {
+    // animation: false,
+    maintainAspectRatio: false,
+    onClick: onClickChart,
+    scales: {
+      xAxes: [{ stacked: true }],
+      yAxes: [{ stacked: true, ticks: { min: 0 } }]
+    }
+  },
+  chartDataSets: [],
   // lastQueryString will be set this.$route.query
   lastQueryString: null,
   search_id: null
 };
+
+setTimeout(() => {}, 2000);
+
+function onClickChart(ev) {
+  console.log(ev);
+}
 
 export default {
   data() {
@@ -174,7 +200,8 @@ export default {
     changeSearchResultTags: changeSearchResultTags,
     showSearch: showSearch,
     renewJqQuery: renewJqQuery,
-    clearError: clearError
+    clearError: clearError,
+    onClickChart: onClickChart
   },
   mounted() {
     this.showSearch();
@@ -209,6 +236,15 @@ function toTextColor(color) {
   const Cb = (Lbg + 0.05) / (Lb + 0.05);
 
   return Cw < Cb ? "#000" : "#fff";
+}
+
+function toColor(text) {
+  return (
+    "#" +
+    SHA1(text)
+      .toString()
+      .substring(0, 6)
+  );
 }
 
 function renderLogDataValue(raw, queryTerms) {
@@ -326,11 +362,7 @@ function renderResult(data) {
   console.log("Built pagenation indices =>", appData.pages);
 
   appData.logs = data.logs.map(x => {
-    const bgColor =
-      "#" +
-      SHA1(x.tag)
-        .toString()
-        .substring(0, 6);
+    const bgColor = toColor(x.tag);
 
     return {
       tag: x.tag,
@@ -419,7 +451,43 @@ function getSearchLogs(searchID, qs) {
       renderResult(response.data);
     })
     .catch(err => {
-      console.log("Error: ", err, err.request, err.response);
+      console.log("Error in getSearchLogs: ", err, err.request, err.response);
+      if (err.response && err.response.data.message) {
+        showError(err.response.data.message);
+      }
+    });
+}
+
+function renderChart(data) {
+  console.log("TS =>", data);
+
+  appData.chartLabels = data.labels;
+  appData.chartDataSets = Object.keys(data.timeseries).map(k => {
+    return {
+      data: data.timeseries[k],
+      barPercentage: 0.99,
+      categoryPercentage: 0.99,
+      backgroundColor: toColor(k),
+      label: k
+    };
+  });
+}
+
+function getSearchTimeSeries(searchID) {
+  const url = `/api/v1/search/${searchID}/timeseries`;
+
+  axios
+    .get(url)
+    .then(response => {
+      renderChart(response.data);
+    })
+    .catch(err => {
+      console.log(
+        "Error in getSearchTimeSeries: ",
+        err,
+        err.request,
+        err.response
+      );
       if (err.response && err.response.data.message) {
         showError(err.response.data.message);
       }
@@ -440,6 +508,7 @@ function getSearchResult(searchID, qs, n = 1) {
       switch (response.data.metadata.status) {
         case "SUCCEEDED":
           appData.metadata = response.data.metadata;
+          getSearchTimeSeries(searchID);
           getSearchLogs(searchID, qs);
           break;
 
