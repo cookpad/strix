@@ -33,6 +33,8 @@
               <div class="content">
                 Query Cost: ${{
                 Math.floor((metadata.scanned_size * 5 / (1000*1000*1000*1000)) * 1000) / 1000 }}
+                (Scanned {{
+                Math.floor(metadata.scanned_size / (1000*1000)) / 1000 }} GB)
               </div>
               <div class="content">Total: {{ metadata.total }} logs</div>
               <div class="content">SubTotal: {{ metadata.sub_total }} logs</div>
