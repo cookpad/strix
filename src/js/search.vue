@@ -29,7 +29,9 @@
           <CCardBody>
             <h3 class="metadata">Results</h3>
             <div v-if="metadata !== null">
-              <div class="content">Elapsed Time: {{ metadata.elapsed_seconds }} seconds</div>
+              <div
+                class="content"
+              >Elapsed Time: {{ Math.floor(metadata.elapsed_seconds*1000) / 1000 }} seconds</div>
               <div class="content">
                 Query Cost: ${{
                 Math.floor((metadata.scanned_size * 5 / (1000*1000*1000*1000)) * 1000) / 1000 }}
