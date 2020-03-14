@@ -8,7 +8,6 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
-	"github.com/sirupsen/logrus"
 )
 
 type arguments struct {
@@ -33,10 +32,6 @@ func runServer(args arguments) error {
 	if err := setupLogger(args.LogLevel); err != nil {
 		return err
 	}
-
-	logger.WithFields(logrus.Fields{
-		"args": args,
-	}).Info("Given options")
 
 	r := gin.Default()
 	store := cookie.NewStore([]byte("auth"))
