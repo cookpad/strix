@@ -29,7 +29,7 @@
         "@coreui/coreui": "3.0.0",
         "@coreui/vue": "3.0.0",
         "@coreui/vue-chartjs": "^1.0.3",
-        "axios": "^0.21.1",
+        "axios": "^1.6.0",
         "crypto-js": "^4.2.0",
         "escape-html": "^1.0.3",
         "querystring": "^0.2.0",
