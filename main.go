@@ -34,7 +34,7 @@ func main() {
 	app.Name = "strix"
 	app.Usage = "Web UI for Minerva (security log search system)"
 	app.Authors = []cli.Author{
-		cli.Author{
+		{
 			Name:  "Masayoshi Mizutani",
 			Email: "mizutani@cookpad.com",
 		},

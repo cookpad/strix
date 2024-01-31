@@ -6,7 +6,7 @@
         "build": "webpack --optimize-minimize"
     },
     "private": true,
-    "repository": "ssh://git@ghe.ckpd.co/security/strix.git",
+    "repository": "https://github.com/cookpad/strix",
     "author": "Masayoshi Mizutani <mizutani@cookpad.com>",
     "license": "MIT",
     "devDependencies": {
@@ -16,7 +16,7 @@
         "babel-polyfill": "^6.26.0",
         "css-loader": "^3.2.0",
         "lodash": "^4.17.21",
-        "node-sass": "^7.0.0",
+        "node-sass": "^8.0.0",
         "sass-loader": "^8.0.0",
         "vue": "^2.6.10",
         "vue-loader": "^15.7.1",
