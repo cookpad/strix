@@ -4,7 +4,7 @@ import "../css/coreui.scss";
 import _ from "lodash";
 import "babel-polyfill";
 import * as Vue from 'vue';
-import { createRouter } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import CoreuiVue from "@coreui/vue";
 import Header from "./header.vue";
 import Search from "./search.vue";
@@ -12,6 +12,7 @@ import Query from "./query.vue";
 import { CChartBar } from "@coreui/vue-chartjs";
 
 const router = createRouter({
+  history: createWebHashHistory(),
   routes: [
     {
       path: "/search/:search_id",
