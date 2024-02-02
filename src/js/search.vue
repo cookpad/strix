@@ -181,7 +181,6 @@ const appData = {
   chartOptions: {
     // animation: false,
     maintainAspectRatio: false,
-    onClick: onClickChart,
     scales: {
       xAxes: [{ stacked: true }],
       yAxes: [{ stacked: true, ticks: { min: 0 } }]
@@ -204,8 +203,7 @@ export default {
     changeSearchResultTags: changeSearchResultTags,
     showSearch: showSearch,
     renewJqQuery: renewJqQuery,
-    clearError: clearError,
-    onClickChart: onClickChart
+    clearError: clearError
   },
   mounted() {
     this.showSearch();
