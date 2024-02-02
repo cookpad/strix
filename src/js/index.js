@@ -1,27 +1,17 @@
 // import '../css/reset.scss'
 // import '../css/main.scss'
 import "../css/coreui.scss";
-
 import _ from "lodash";
 import "babel-polyfill";
 import * as Vue from 'vue';
 import { createRouter } from 'vue-router'
 import CoreuiVue from "@coreui/vue";
-
 import Header from "./header.vue";
 import Search from "./search.vue";
 import Query from "./query.vue";
-
-Vue.component("strix-header", Header);
-Vue.component("strix-query", Query);
-Vue.component("strix-search", Search);
-Vue.use(VueRouter);
-Vue.use(CoreuiVue);
-
 import { CChartBar } from "@coreui/vue-chartjs";
-Vue.component("CChartBar", CChartBar);
 
-const router = new createRouter({
+const router = createRouter({
   routes: [
     {
       path: "/search/:search_id",
@@ -57,6 +47,15 @@ const router = new createRouter({
   ],
 });
 
-const app = new Vue({
-  router,
-}).$mount("#app");
+const app = Vue.createApp({
+  router
+})
+
+app.component("strix-header", Header);
+app.component("strix-query", Query);
+app.component("strix-search", Search);
+app.component("CChartBar", CChartBar);
+app.use(VueRouter)
+app.use(CoreuiVue)
+
+app.mount("#app")
