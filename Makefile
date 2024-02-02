@@ -5,7 +5,7 @@ build: $(SCRIPT) $(BIN)
 
 $(SCRIPT): src/js/* src/css/*
 	yarn install
-	node ./node_modules/.bin/webpack --optimize-minimize --config ./webpack.config.js
+	node ./node_modules/.bin/webpack --config ./webpack.config.js
 
 $(BIN): *.go
 	go build -v
