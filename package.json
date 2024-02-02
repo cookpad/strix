@@ -1,6 +1,6 @@
 {
     "name": "strix",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "scripts": {
         "dev": "webpack-dev-server",
         "build": "webpack --optimize-minimize"
@@ -14,27 +14,29 @@
         "babel": "^6.23.0",
         "babel-loader": "^8.0.6",
         "babel-polyfill": "^6.26.0",
-        "css-loader": "^3.2.0",
+        "css-loader": "^6.10.0",
         "lodash": "^4.17.21",
-        "node-sass": "^8.0.0",
+        "sass": "^1.70.0",
         "sass-loader": "^8.0.0",
-        "vue": "^2.6.10",
-        "vue-loader": "^15.7.1",
-        "vue-template-compiler": "^2.6.10",
-        "webpack": "^4.41.2",
-        "webpack-cli": "^3.3.9",
-        "webpack-dev-server": "^3.9.0"
+        "vue": "^3.4.15",
+        "vue-loader": "^17.4.2",
+        "webpack": "^5.1.2",
+        "webpack-cli": "^5.1.4",
+        "webpack-dev-server": "^4.15.1"
     },
     "dependencies": {
-        "@coreui/coreui": "3.0.0",
-        "@coreui/vue": "3.0.0",
-        "@coreui/vue-chartjs": "^1.0.3",
+        "@coreui/coreui": "^4.0.5",
+        "@coreui/vue": "4.0.0",
+        "@coreui/vue-chartjs": "^2.2.0",
+        "@popperjs/core": "^2.9.2",
+        "chart.js": "^3.9.1",
+        "postcss":"^8.1.0",
         "axios": "^1.6.0",
         "crypto-js": "^4.2.0",
         "escape-html": "^1.0.3",
         "querystring": "^0.2.0",
         "sanitize-html": "^2.3.2",
         "strftime": "^0.10.0",
-        "vue-router": "^3.1.5"
+        "vue-router": "^4.2.5"
     }
 }
