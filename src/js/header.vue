@@ -1,17 +1,17 @@
 <template>
   <CHeader fixed light>
     <CHeaderNav class="d-md-down-none mr-auto">
-      <CHeaderNavItem class="px-3">
-        <CHeaderNavLink to="/">Strix</CHeaderNavLink>
-      </CHeaderNavItem>
+      <CNavItem class="px-3">
+        <CNavLink to="/">Strix</CNavLink>
+      </CNavItem>
     </CHeaderNav>
     <CHeaderNav class="mr-4">
-      <CHeaderNavItem class="d-md-down-none mx-2" v-if="user === null">
+      <CNavItem class="d-md-down-none mx-2" v-if="user === null">
         <CButton color="primary" class="m-2" v-on:click="moveToLoginPage">
           <!--    <a href="/auth/google">Login</a>-->
           Login
         </CButton>
-      </CHeaderNavItem>
+      </CNavItem>
 
       <CDropdown
         v-else
@@ -21,11 +21,11 @@
         add-menu-classes="pt-0"
       >
         <template #toggler>
-          <CHeaderNavLink>
+          <CNavLink>
             <div class="c-avatar">
               <img :src="user.image" class="c-avatar-img" />
             </div>
-          </CHeaderNavLink>
+          </CNavLink>
         </template>
 
         <CDropdownHeader tag="div" class="text-center" color="light">

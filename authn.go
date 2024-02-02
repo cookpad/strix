@@ -55,13 +55,13 @@ func (x *sessionManager) sign(user strixUser, c *gin.Context) error {
 	})
 	signed, err := token.SignedString(x.jwtSecret)
 	if err != nil {
-		return errors.Wrapf(err, "Fail to sign JWT token: %v", token)
+		return errors.Wrapf(err, "fail to sign JWT token: %v", token)
 	}
 
 	ssn.Set(cookieKey, signed)
 	if err := ssn.Save(); err != nil {
-		logger.WithError(err).Errorf("Fail to save cookie")
-		return errors.Wrap(err, "Fail to save cookie")
+		logger.WithError(err).Errorf("fail to save cookie")
+		return errors.Wrap(err, "fail to save cookie")
 	}
 
 	return nil
@@ -73,23 +73,23 @@ func claimToStrixUser(claims jwt.MapClaims) (*strixUser, error) {
 	if v, ok := claims["user"].(string); ok {
 		user.UserID = v
 	} else {
-		return nil, fmt.Errorf("Missing 'user' field in token")
+		return nil, fmt.Errorf("missing 'user' field in token")
 	}
 
 	if v, ok := claims["image"].(string); ok {
 		user.Image = v
 	} else {
-		return nil, fmt.Errorf("Missing 'image' field in token")
+		return nil, fmt.Errorf("missing 'image' field in token")
 	}
 
 	if v, ok := claims["expires_at"].(string); ok {
 		if expires, err := time.Parse("2006-01-02T15:04:05.999999Z07:00", v); err == nil {
 			user.ExpiresAt = expires
 		} else {
-			return nil, errors.Wrapf(err, "Fail to parse 'expires_at' field properly: %s", v)
+			return nil, errors.Wrapf(err, "fail to parse 'expires_at' field properly: %s", v)
 		}
 	} else {
-		return nil, fmt.Errorf("Missing 'expires_at' field in token")
+		return nil, fmt.Errorf("missing 'expires_at' field in token")
 	}
 
 	return &user, nil
@@ -107,18 +107,18 @@ func (x *sessionManager) validate(c *gin.Context) (*strixUser, error) {
 	ssn := sessions.Default(c)
 	cookie := ssn.Get(cookieKey)
 	if cookie == nil {
-		return nil, fmt.Errorf("No cookie")
+		return nil, fmt.Errorf("no cookie")
 	}
 
 	raw, ok := cookie.(string)
 	if !ok {
-		return nil, fmt.Errorf("Invalid cookie data format: %v", cookie)
+		return nil, fmt.Errorf("invalid cookie data format: %v", cookie)
 	}
 
 	token, err := jwt.Parse(raw, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
 		return x.jwtSecret, nil

@@ -67,7 +67,7 @@
 
         <CCard>
           <CCardHeader>
-            <CInput
+            <CFormInput
               type="text"
               autocomplete="off"
               placeholder="jq filter"

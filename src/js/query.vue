@@ -6,7 +6,7 @@
           <CCardBody>
             <CRow>
               <CCol sm="12">
-                <CInput
+                <CFormInput
                   type="text"
                   autofocus
                   autocomplete="off"
@@ -19,7 +19,7 @@
             </CRow>
             <CRow>
               <CCol sm="2">
-                <CSelect
+                <CFormSelect
                   v-on:update:value="spanMode = $event"
                   v-bind:value="spanMode"
                   :options="[
@@ -30,7 +30,7 @@
               </CCol>
 
               <CCol sm="2" v-if="spanMode === 'relative'">
-                <CSelect
+                <CFormSelect
                   v-on:update:value="timeSpan = $event"
                   :options="[
                   { value: '3600', label: '1 hour' },

@@ -100,7 +100,7 @@ func main() {
 
 	app.Action = func(c *cli.Context) error {
 		if c.NArg() != 1 {
-			return fmt.Errorf("Endpoint is required")
+			return fmt.Errorf("endpoint is required")
 		}
 		args.Endpoint = c.Args().Get(0)
 
