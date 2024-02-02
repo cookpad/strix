@@ -4,8 +4,8 @@ import "../css/coreui.scss";
 
 import _ from "lodash";
 import "babel-polyfill";
-import Vue from "vue";
-import VueRouter from "vue-router";
+import * as Vue from 'vue';
+import { createRouter } from 'vue-router'
 import CoreuiVue from "@coreui/vue";
 
 import Header from "./header.vue";
@@ -21,7 +21,7 @@ Vue.use(CoreuiVue);
 import { CChartBar } from "@coreui/vue-chartjs";
 Vue.component("CChartBar", CChartBar);
 
-const router = new VueRouter({
+const router = new createRouter({
   routes: [
     {
       path: "/search/:search_id",

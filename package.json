@@ -38,6 +38,7 @@
         "sanitize-html": "^2.3.2",
         "strftime": "^0.10.0",
         "vue-router": "^4.2.5",
-        "vue-loader": "^17.4.2"
+        "vue-loader": "^17.4.2",
+        "vue-style-loader": "^4.1.3"
     }
 }
