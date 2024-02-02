@@ -195,10 +195,6 @@ const appData = {
 
 setTimeout(() => {}, 2000);
 
-function onClickChart(ev) {
-  console.log(ev);
-}
-
 export default {
   data() {
     return appData;
@@ -336,9 +332,6 @@ function buildPagenationIndices(metadata) {
     ]
   );
 
-  console.log("currentPage", currentPage);
-  console.log("pages", pages);
-
   return pages;
 }
 
@@ -367,7 +360,6 @@ function renderResult(data) {
   });
 
   appData.pages = buildPagenationIndices(data.metadata);
-  console.log("Built pagenation indices =>", appData.pages);
 
   appData.logs = data.logs.map(x => {
     const bgColor = toColor(x.tag);
@@ -416,7 +408,6 @@ function renewSearchResult(router, newQuery) {
   const url =
     `/search/${appData.search_id}` +
     (Object.keys(qs).length > 0 ? "?" + querystring.stringify(qs) : "");
-  console.log("renew => ", url);
   router.push(url);
 }
 
@@ -459,7 +450,6 @@ function getSearchLogs(searchID, qs) {
       renderResult(response.data);
     })
     .catch(err => {
-      console.log("Error in getSearchLogs: ", err, err.request, err.response);
       if (err.response && err.response.data.message) {
         showError(err.response.data.message);
       }
@@ -467,8 +457,6 @@ function getSearchLogs(searchID, qs) {
 }
 
 function renderChart(data) {
-  console.log("TS =>", data);
-
   appData.chartLabels = data.labels;
   appData.chartDataSets = Object.keys(data.timeseries).map(k => {
     return {
@@ -489,17 +477,10 @@ function getSearchTimeSeries(searchID) {
     .then(response => {
       renderChart(response.data);
     })
-    .catch(err => {
-      console.log(
-        "Error in getSearchTimeSeries: ",
-        err,
-        err.request,
-        err.response
-      );
+    .catch(err);
       if (err.response && err.response.data.message) {
         showError(err.response.data.message);
-      }
-    });
+      };
 }
 
 function getSearchResult(searchID, qs, n = 1) {
@@ -538,7 +519,6 @@ function getSearchResult(searchID, qs, n = 1) {
       }
     })
     .catch(err => {
-      console.log("Error: ", err, err.request, err.response);
       if (err.response && err.response.data.message) {
         showError(err.response.data.message);
       }

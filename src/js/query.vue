@@ -135,19 +135,15 @@ export default {
 };
 
 function setParameters() {
-  console.log(this.$route.params);
   const searchID = this.$route.params.search_id;
   if (searchID === undefined) {
     return;
   }
 
-  console.log("ID =>", searchID);
-
   const url = `/api/v1/search/${searchID}`;
   axios
     .get(url)
     .then(response => {
-      console.log("response for param", response);
       const meta = response.data.metadata;
       appData.query = meta.query.map(q => q.term).join(" ");
       appData.timeBegin = utcDateTime(meta.start_time);
@@ -158,7 +154,6 @@ function setParameters() {
 }
 
 function showError(err) {
-  console.log(err);
   if (err.response) {
     console.log("error response: ", err.response);
   }
@@ -214,7 +209,6 @@ function submitQuery(ev) {
     return;
   }
 
-  console.log("submit...", ev);
   appData.logs = [];
 
   const span = extractSpan();

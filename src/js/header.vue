@@ -57,11 +57,9 @@ export default {
     axios
       .get("/auth")
       .then(resp => {
-        console.log("Auth OK:", resp);
         appData.user = resp.data.user;
       })
       .catch(err => {
-        console.log("auth NG", err);
       });
   }
 };
