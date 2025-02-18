@@ -1,6 +1,10 @@
 # Strix
 
-Web User Interface for [Minerva](https://github.com/m-mizutani/minerva).
+> [!WARNING]  
+> This repo is now (as of 2025-02-18) archived and will not receive future updates, security related or otherwise. Use at your own risk.
+
+
+Web User Interface for [Minerva](https://github.com/cookpad/minerva).
 
 ![strix-sample](https://user-images.githubusercontent.com/605953/75205792-0bb17680-57b8-11ea-8e27-ead912af1194.png)
 
@@ -10,7 +14,7 @@ Web User Interface for [Minerva](https://github.com/m-mizutani/minerva).
   - go >= 1.13
   - yarn >= 1.21.1
 - Resources
-  - Endpoint URL of deployed [Minerva](https://github.com/m-mizutani/minerva/blob/master/README.md)
+  - Endpoint URL of deployed [Minerva](https://github.com/cookpad/minerva/blob/master/README.md)
   - Google OAuth 2.0 Client setting (a JSON file saved as `oatuh.json` ).
     - Set callback redirect URL as `http://localhost:8080/auth/google/callback` if you run strix on localhost.
     - See [docs](https://developers.google.com/identity/protocols/OAuth2) for more details.
@@ -18,7 +22,7 @@ Web User Interface for [Minerva](https://github.com/m-mizutani/minerva).
 ## Build
 
 ```sh
-$ git clone https://github.com/m-mizutani/strix.git
+$ git clone https://github.com/cookpad/strix.git
 $ cd strix
 $ yarn install
 $ node ./node_modules/.bin/webpack --optimize-minimize --config ./webpack.config.js
